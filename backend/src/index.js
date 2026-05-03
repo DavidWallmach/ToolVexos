@@ -27,12 +27,15 @@ const PORT = process.env.PORT || 3001
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || origin.includes('localhost')) callback(null, true)
-    else callback(new Error('Not allowed by CORS'))
+    const dominiosPermitidos = ['localhost', 'onrender.com', 'vercel.app'];
+    if (!origin || dominiosPermitidos.some(dominio => origin.includes(dominio))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
-}))
-
+}));
 app.use(morgan('dev'))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
