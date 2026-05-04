@@ -1,0 +1,8 @@
+{
+  "name": "toolcrip",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd toolvexos/backend && npm install && npx prisma generate --schema=src/prisma/schema.prisma",
+    "start": "cd toolvexos/backend && node src/index.js"
+  }
+}
