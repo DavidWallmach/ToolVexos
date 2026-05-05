@@ -57,6 +57,24 @@ app.use('/api/salidas', salidaRoutes)
 app.use('/api/personas', personaRoutes)
 app.use('/api/ubicaciones', ubicacionRoutes)
 
+// Ruta temporal para crear admin — BORRAR DESPUÉS
+app.get('/api/setup', async (req, res) => {
+  try {
+    const { PrismaClient } = await import('@prisma/client')
+    const bcrypt = await import('bcryptjs')
+    const prisma = new PrismaClient()
+    const hashed = await bcrypt.default.hash('Admin2026@', 12)
+    const user = await prisma.user.upsert({
+      where: { empleado: 'ADMIN-001' },
+      update: { password: hashed },
+      create: { empleado: 'ADMIN-001', nombre: 'David Wallmach', email: 'admin@toolcrip.com', password: hashed, role: 'ADMIN' }
+    })
+    await prisma.$disconnect()
+    res.json({ ok: true, mensaje: 'Admin creado', empleado: user.empleado })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 app.use(notFound)
 app.use(errorHandler)
 
