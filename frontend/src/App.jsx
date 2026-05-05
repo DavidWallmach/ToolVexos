@@ -16,6 +16,7 @@ import UsuariosPage from './pages/UsuariosPage'
 import AlertasPage from './pages/AlertasPage'
 import UbicacionesPage from './pages/UbicacionesPage'
 import PersonasPage from './pages/PersonasPage'
+import ReportesPage from './pages/ReportesPage'
 
 function Private({ children }) {
   const token = useAuthStore(s => s.token)
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="personas" element={<PersonasPage />} />
           <Route path="alertas" element={<AlertasPage />} />
           <Route path="ubicaciones" element={<UbicacionesPage />} />
+          <Route path="reportes" element={<ReportesPage />} />
           <Route path="usuarios" element={<AdminOnly><UsuariosPage /></AdminOnly>} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
