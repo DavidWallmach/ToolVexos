@@ -27,8 +27,16 @@ const PORT = process.env.PORT || 3001
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || origin.includes('localhost')) callback(null, true)
-    else callback(new Error('Not allowed by CORS'))
+    const allowed = [
+      'https://tool-vexos.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ]
+    if (!origin || allowed.includes(origin) || origin.includes('localhost')) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
   },
   credentials: true,
 }))
