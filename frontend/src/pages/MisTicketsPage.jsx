@@ -17,7 +17,7 @@ export default function MisTicketsPage() {
   const [tickets, setTickets] = useState([])
   const [herramientas, setHerramientas] = useState([])
   const [modal, setModal] = useState(false)
-  const [form, setForm] = useState({ herramientaId:'', cantidad:'', motivo:'' })
+  const [form, setForm] = useState({ herramientaId:'', cantidad:'', motivo:'', operador:'' })
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
@@ -35,16 +35,20 @@ export default function MisTicketsPage() {
 
   const set = (k, v) => setForm(f => ({...f, [k]: v}))
 
-  const handleCreate = async () => {
-    if (!form.herramientaId || !form.cantidad || !form.motivo) return toast.error('Todos los campos son obligatorios')
-    try {
-      await api.post('/tickets', form)
-      toast.success('Ticket enviado — el encargado lo revisará')
-      setModal(false)
-      setForm({ herramientaId:'', cantidad:'', motivo:'' })
-      load()
-    } catch (err) { toast.error(err.response?.data?.error || 'Error al crear ticket') }
-  }
+const handleCreate = async () => {
+  if (!form.herramientaId || !form.cantidad || !form.motivo || !form.operador) 
+    return toast.error('Todos los campos son obligatorios')
+  try {
+    await api.post('/tickets', {
+      ...form,
+      motivo: `${form.motivo} | Operador: ${form.operador}`
+    })
+    toast.success('Ticket enviado — el encargado lo revisará')
+    setModal(false)
+    setForm({ herramientaId:'', cantidad:'', motivo:'', operador:'' })
+    load()
+  } catch (err) { toast.error(err.response?.data?.error || 'Error al crear ticket') }
+}
 
   const pending = tickets.filter(t => t.status === 'PENDIENTE').length
 
@@ -85,9 +89,20 @@ export default function MisTicketsPage() {
                 </div>
                 <div className="text-base font-medium mb-1" style={{color:'#e8e8e8'}}>{t.herramienta?.nombre}</div>
                 <div className="mono text-xs mb-2" style={{color:'#555'}}>{t.herramienta?.codigo} · {t.cantidad} {t.herramienta?.unidad}</div>
-                <div className="text-sm" style={{color:'#666'}}>
-                  <span className="mono text-xs" style={{color:'#444'}}>MOTIVO: </span>{t.motivo}
-                </div>
+                <div>
+  <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>MOTIVO</div>
+  <div className="text-sm" style={{color:'#888'}}>
+    {t.motivo.includes('| Operador:') 
+      ? t.motivo.split('| Operador:')[0].trim()
+      : t.motivo}
+  </div>
+  {t.motivo.includes('| Operador:') && (
+    <div className="mono text-xs mt-1 px-2 py-1 inline-block" 
+      style={{background:'#f5a62315', color:'#f5a623', border:'1px solid #f5a62330'}}>
+      👷 {t.motivo.split('| Operador:')[1].trim()}
+    </div>
+  )}
+</div>
                 {t.nota && (
                   <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'#1a1a1a'}}>
                     <div className="mono text-xs mb-0.5" style={{color:'#555'}}>NOTA DEL ENCARGADO:</div>
@@ -138,6 +153,17 @@ export default function MisTicketsPage() {
                   👤 Solicitante: <span style={{color:'#888'}}>{user?.nombre} ({user?.empleado})</span>
                 </div>
               </div>
+              <div>
+  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>
+    NOMBRE DEL OPERADOR QUE SOLICITA *
+  </label>
+  <input 
+    className="input-field" 
+    value={form.operador} 
+    onChange={e => set('operador', e.target.value)} 
+    placeholder="Nombre del operador en piso..." 
+  />
+</div>
               <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest">
                 ENVIAR SOLICITUD
               </button>
