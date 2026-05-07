@@ -16,6 +16,7 @@ import entradaRoutes from './routes/entrada.routes.js'
 import salidaRoutes from './routes/salida.routes.js'
 import personaRoutes from './routes/persona.routes.js'
 import ubicacionRoutes from './routes/ubicacion.routes.js'
+import ticketRoutes from './routes/ticket.routes.js'
 
 import { errorHandler } from './middleware/error.middleware.js'
 import { notFound } from './middleware/notFound.middleware.js'
@@ -32,11 +33,8 @@ app.use(cors({
       'http://localhost:5173',
       'http://localhost:5174',
     ]
-    if (!origin || allowed.includes(origin) || origin.includes('localhost')) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
+    if (!origin || allowed.includes(origin) || origin.includes('localhost')) callback(null, true)
+    else callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
 }))
@@ -49,7 +47,7 @@ const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 })
 app.use('/api/', limiter)
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', app: 'Tool Crib Manager', version: '2.1.0' })
+  res.json({ status: 'ok', app: 'Tool Crib Manager', version: '2.2.0' })
 })
 
 app.use('/api/auth', authRoutes)
@@ -64,7 +62,7 @@ app.use('/api/entradas', entradaRoutes)
 app.use('/api/salidas', salidaRoutes)
 app.use('/api/personas', personaRoutes)
 app.use('/api/ubicaciones', ubicacionRoutes)
-
+app.use('/api/tickets', ticketRoutes)
 
 app.use(notFound)
 app.use(errorHandler)
