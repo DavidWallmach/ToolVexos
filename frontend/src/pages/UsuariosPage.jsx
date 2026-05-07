@@ -3,7 +3,13 @@ import { Plus, UserCheck, UserX } from 'lucide-react'
 import api from '../lib/api'
 import toast from 'react-hot-toast'
 
-const roleColor = { ADMIN:'text-[#f5a623]', SUPERVISOR:'text-blue-400', JEFE_GRUPO:'text-purple-400', OPERADOR:'text-[#555]' }
+const roleColor = {
+  ADMIN:'text-[#f5a623]',
+  TOOLCRIP:'text-green-400',
+  SUPERVISOR:'text-blue-400',
+  JEFE_GRUPO:'text-purple-400',
+  OPERADOR:'text-[#555]'
+}
 
 export default function UsuariosPage() {
   const [users, setUsers] = useState([])
@@ -26,7 +32,7 @@ export default function UsuariosPage() {
       await api.put(`/users/${u.id}`, { activo: !u.activo })
       toast.success(u.activo ? 'Usuario desactivado' : 'Usuario activado')
       load()
-    } catch (err) { toast.error('Error') }
+    } catch { toast.error('Error') }
   }
 
   const set = (k, v) => setForm(f => ({...f, [k]: v}))
@@ -68,26 +74,26 @@ export default function UsuariosPage() {
       </div>
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.85)'}}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.88)'}}>
           <div className="w-full max-w-md card p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="display text-xl" style={{color:'#f5a623'}}>NUEVO USUARIO</div>
               <button onClick={() => setModal(false)} className="btn-ghost p-2 text-xs">✕</button>
             </div>
             <div className="space-y-4">
-              {[['N° EMPLEADO','empleado','EMP-001'],['NOMBRE COMPLETO','nombre','David Wallmach'],['EMAIL (opcional)','email','correo@empresa.com'],['CONTRASEÑA','password','']].map(([label,key,ph]) => (
+              {[['N° EMPLEADO','empleado','EMP-001'],['NOMBRE COMPLETO','nombre','Juan Pérez'],['EMAIL (opcional)','email','correo@empresa.com'],['CONTRASEÑA','password','']].map(([label,key,ph]) => (
                 <div key={key}>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>{label}</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>{label}</label>
                   <input type={key==='password'?'password':'text'} className="input-field mono" value={form[key]} onChange={e => set(key, e.target.value)} placeholder={ph} />
                 </div>
               ))}
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>ROL</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>ROL</label>
                 <select className="input-field" value={form.role} onChange={e => set('role', e.target.value)}>
-                  <option value="OPERADOR">OPERADOR — Solo ver inventario</option>
-                  <option value="JEFE_GRUPO">JEFE DE GRUPO — Puede solicitar material</option>
-                  <option value="SUPERVISOR">SUPERVISOR — Puede solicitar sin límite</option>
-                  <option value="ADMIN">ADMIN — Acceso total</option>
+                  <option value="TOOLCRIP">TOOLCRIP — Encargado del almacén (sin gestión de usuarios)</option>
+                  <option value="SUPERVISOR">SUPERVISOR — Solo solicitar material y ver inventario</option>
+                  <option value="JEFE_GRUPO">JEFE DE GRUPO — Solo solicitar material y ver inventario</option>
+                  <option value="OPERADOR">OPERADOR — Solo ver inventario disponible</option>
                 </select>
               </div>
               <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest">CREAR USUARIO</button>

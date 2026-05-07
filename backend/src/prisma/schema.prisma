@@ -20,12 +20,14 @@ model User {
 
   prestamos   Prestamo[]
   movimientos Movimiento[]
+  tickets     Ticket[]
 
   @@map("users")
 }
 
 enum Role {
   ADMIN
+  TOOLCRIP
   SUPERVISOR
   JEFE_GRUPO
   OPERADOR
@@ -54,20 +56,20 @@ model Ubicacion {
 }
 
 model Herramienta {
-  id          String     @id @default(cuid())
-  codigo      String     @unique
-  nombre      String
-  descripcion String?
-  categoriaId String
-  ubicacionId String?
-  stockTotal  Int        @default(0)
-  stockDisp   Int        @default(0)
-  stockMin    Int        @default(1)
+  id              String     @id @default(cuid())
+  codigo          String     @unique
+  nombre          String
+  descripcion     String?
+  categoriaId     String
+  ubicacionId     String?
+  stockTotal      Int        @default(0)
+  stockDisp       Int        @default(0)
+  stockMin        Int        @default(1)
   ubicacion_texto String?
-  unidad      String     @default("pza")
-  status      StatusHerr @default(DISPONIBLE)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  unidad          String     @default("pza")
+  status          StatusHerr @default(DISPONIBLE)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   categoria      Categoria      @relation(fields: [categoriaId], references: [id])
   ubicacion      Ubicacion?     @relation(fields: [ubicacionId], references: [id])
@@ -76,6 +78,7 @@ model Herramienta {
   mantenimientos Mantenimiento[]
   entradas       Entrada[]
   salidas        Salida[]
+  tickets        Ticket[]
 
   @@map("herramientas")
 }
@@ -116,7 +119,7 @@ enum StatusPrest {
 }
 
 model Movimiento {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   herramientaId String
   userId        String
   tipo          TipoMov
@@ -124,7 +127,7 @@ model Movimiento {
   stockAntes    Int
   stockDespues  Int
   nota          String?
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime @default(now())
 
   herramienta Herramienta @relation(fields: [herramientaId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
@@ -142,12 +145,12 @@ enum TipoMov {
 }
 
 model Mantenimiento {
-  id            String      @id @default(cuid())
+  id            String    @id @default(cuid())
   herramientaId String
   tipo          String
   descripcion   String
-  status        String      @default("pendiente")
-  fechaInicio   DateTime    @default(now())
+  status        String    @default("pendiente")
+  fechaInicio   DateTime  @default(now())
   fechaFin      DateTime?
   tecnico       String?
 
@@ -156,37 +159,35 @@ model Mantenimiento {
   @@map("mantenimientos")
 }
 
-// ─── Entradas de stock ───────────────────────────────────────
 model Entrada {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   herramientaId String
   cantidad      Int
   proveedor     String?
   recibio       String?
   notas         String?
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime @default(now())
 
   herramienta Herramienta @relation(fields: [herramientaId], references: [id])
 
   @@map("entradas")
 }
 
-// ─── Salidas directas (sin préstamo) ─────────────────────────
 model Salida {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   herramientaId String
   cantidad      Int
   solicitante   String
   departamento  String?
   proposito     String?
-  createdAt     DateTime    @default(now())
+  ticketId      String?
+  createdAt     DateTime @default(now())
 
   herramienta Herramienta @relation(fields: [herramientaId], references: [id])
 
   @@map("salidas")
 }
 
-// ─── Personas (quienes retiran material) ─────────────────────
 model Persona {
   id           String   @id @default(cuid())
   nombre       String
@@ -196,4 +197,31 @@ model Persona {
   createdAt    DateTime @default(now())
 
   @@map("personas")
+}
+
+// ─── Tickets de solicitud ─────────────────────────────────────
+model Ticket {
+  id            String       @id @default(cuid())
+  folio         String       @unique
+  userId        String
+  herramientaId String
+  cantidad      Int
+  motivo        String
+  status        StatusTicket @default(PENDIENTE)
+  nota          String?      // Nota del encargado al aprobar/rechazar
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  herramienta Herramienta @relation(fields: [herramientaId], references: [id])
+
+  @@index([userId])
+  @@map("tickets")
+}
+
+enum StatusTicket {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  DESPACHADO
 }

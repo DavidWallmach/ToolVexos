@@ -15,13 +15,22 @@ export const protect = async (req, res, next) => {
   } catch { return res.status(401).json({ error: 'Token inválido o expirado.' }) }
 }
 
+// Solo ADMIN puede gestionar usuarios
 export const adminOnly = (req, res, next) => {
   if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Solo administradores.' })
   next()
 }
 
+// ADMIN o TOOLCRIP pueden gestionar inventario
+export const toolcripUp = (req, res, next) => {
+  const allowed = ['ADMIN', 'TOOLCRIP']
+  if (!allowed.includes(req.user?.role)) return res.status(403).json({ error: 'Sin permisos para esta acción.' })
+  next()
+}
+
+// ADMIN, TOOLCRIP, SUPERVISOR, JEFE_GRUPO
 export const supervisorUp = (req, res, next) => {
-  const allowed = ['ADMIN', 'SUPERVISOR', 'JEFE_GRUPO']
+  const allowed = ['ADMIN', 'TOOLCRIP', 'SUPERVISOR', 'JEFE_GRUPO']
   if (!allowed.includes(req.user?.role)) return res.status(403).json({ error: 'Sin permisos para esta acción.' })
   next()
 }
