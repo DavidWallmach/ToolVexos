@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react' // Añadí useCallback
 import { Plus, Clock, CheckCircle, XCircle, Package } from 'lucide-react'
 import api from '../lib/api'
 import useAuthStore from '../hooks/useAuth'
@@ -16,38 +16,55 @@ export default function MisTicketsPage() {
   const user = useAuthStore(s => s.user)
   const [tickets, setTickets] = useState([])
   const [herramientas, setHerramientas] = useState([])
+  const [personas, setPersonas] = useState([])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ herramientaId:'', cantidad:'', motivo:'', operador:'' })
   const [loading, setLoading] = useState(true)
-  const [personas, setPersonas] = useState([])
 
-  const [t, h, p] = await Promise.all([
-  api.get('/tickets'),
-  api.get('/herramientas'),
-  api.get('/personas')
-])
-setTickets(t.data.tickets)
-setHerramientas(h.data.herramientas.filter(h => h.stockDisp > 0 && h.status === 'DISPONIBLE'))
-setPersonas(p.data.personas)
+  // CORRECCIÓN 1: La función load debe ser async y estar definida correctamente
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [t, h, p] = await Promise.all([
+        api.get('/tickets'),
+        api.get('/herramientas'),
+        api.get('/personas')
+      ])
+      
+      // Ajuste según la estructura de tu backend
+      setTickets(t.data.tickets || t.data) 
+      setHerramientas((h.data.herramientas || h.data).filter(item => item.stockDisp > 0 && item.status === 'DISPONIBLE'))
+      setPersonas(p.data.personas || p.data)
+    } catch (err) {
+      toast.error('Error al cargar datos del Tool Crib')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { 
+    load() 
+  }, [load])
 
   const set = (k, v) => setForm(f => ({...f, [k]: v}))
 
-const handleCreate = async () => {
-  if (!form.herramientaId || !form.cantidad || !form.motivo || !form.operador) 
-    return toast.error('Todos los campos son obligatorios')
-  try {
-    await api.post('/tickets', {
-      ...form,
-      motivo: `${form.motivo} | Operador: ${form.operador}`
-    })
-    toast.success('Ticket enviado — el encargado lo revisará')
-    setModal(false)
-    setForm({ herramientaId:'', cantidad:'', motivo:'', operador:'' })
-    load()
-  } catch (err) { toast.error(err.response?.data?.error || 'Error al crear ticket') }
-}
+  const handleCreate = async () => {
+    if (!form.herramientaId || !form.cantidad || !form.motivo || !form.operador) 
+      return toast.error('Todos los campos son obligatorios')
+    
+    try {
+      await api.post('/tickets', {
+        ...form,
+        motivo: `${form.motivo} | Operador: ${form.operador}`
+      })
+      toast.success('Ticket enviado — el encargado lo revisará')
+      setModal(false)
+      setForm({ herramientaId:'', cantidad:'', motivo:'', operador:'' })
+      load()
+    } catch (err) { 
+      toast.error(err.response?.data?.error || 'Error al crear ticket') 
+    }
+  }
 
   const pending = tickets.filter(t => t.status === 'PENDIENTE').length
 
@@ -60,16 +77,16 @@ const handleCreate = async () => {
             {pending > 0 ? `${pending} TICKET(S) PENDIENTE(S) DE APROBACIÓN` : 'SOLICITUDES DE MATERIAL'}
           </div>
         </div>
-        <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
+        <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm flex items-center gap-2">
           <Plus size={14} /> SOLICITAR MATERIAL
         </button>
       </div>
 
-      {/* Tickets */}
+      {/* Listado de Tickets */}
       <div className="space-y-3">
         {loading ? <div className="mono text-xs" style={{color:'#333'}}>CARGANDO...</div>
         : tickets.length === 0 ? (
-          <div className="card p-10 text-center">
+          <div className="card p-10 text-center" style={{background:'#111', border:'1px dashed #2a2a2a'}}>
             <Package size={32} style={{color:'#2a2a2a', margin:'0 auto 12px'}} />
             <div className="mono text-xs" style={{color:'#333'}}>AÚN NO HAS HECHO NINGUNA SOLICITUD</div>
             <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm mt-4 mx-auto">
@@ -77,31 +94,34 @@ const handleCreate = async () => {
             </button>
           </div>
         ) : tickets.map(t => (
-          <div key={t.id} className="card p-5" style={{borderLeft:`2px solid ${statusColor[t.status]}`}}>
+          <div key={t.id} className="card p-5" style={{borderLeft:`2px solid ${statusColor[t.status]}`, background:'#111'}}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   {statusIcon[t.status]}
                   <span className="mono text-xs font-bold" style={{color: statusColor[t.status]}}>{t.status}</span>
                   <span className="mono text-xs" style={{color:'#444'}}>·</span>
-                  <span className="mono text-xs" style={{color:'#f5a623'}}>{t.folio}</span>
+                  <span className="mono text-xs" style={{color:'#f5a623'}}>{t.folio || 'S/F'}</span>
                 </div>
                 <div className="text-base font-medium mb-1" style={{color:'#e8e8e8'}}>{t.herramienta?.nombre}</div>
                 <div className="mono text-xs mb-2" style={{color:'#555'}}>{t.herramienta?.codigo} · {t.cantidad} {t.herramienta?.unidad}</div>
+                
+                {/* Lógica de motivo y operador */}
                 <div>
-  <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>MOTIVO</div>
-  <div className="text-sm" style={{color:'#888'}}>
-    {t.motivo.includes('| Operador:') 
-      ? t.motivo.split('| Operador:')[0].trim()
-      : t.motivo}
-  </div>
-  {t.motivo.includes('| Operador:') && (
-    <div className="mono text-xs mt-1 px-2 py-1 inline-block" 
-      style={{background:'#f5a62315', color:'#f5a623', border:'1px solid #f5a62330'}}>
-      👷 {t.motivo.split('| Operador:')[1].trim()}
-    </div>
-  )}
-</div>
+                  <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>MOTIVO</div>
+                  <div className="text-sm" style={{color:'#888'}}>
+                    {t.motivo?.includes('| Operador:') 
+                      ? t.motivo.split('| Operador:')[0].trim()
+                      : t.motivo}
+                  </div>
+                  {t.motivo?.includes('| Operador:') && (
+                    <div className="mono text-xs mt-1 px-2 py-1 inline-block" 
+                      style={{background:'#f5a62315', color:'#f5a623', border:'1px solid #f5a62330'}}>
+                      👷 {t.motivo.split('| Operador:')[1].trim()}
+                    </div>
+                  )}
+                </div>
+
                 {t.nota && (
                   <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'#1a1a1a'}}>
                     <div className="mono text-xs mb-0.5" style={{color:'#555'}}>NOTA DEL ENCARGADO:</div>
