@@ -19,17 +19,16 @@ export default function MisTicketsPage() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ herramientaId:'', cantidad:'', motivo:'', operador:'' })
   const [loading, setLoading] = useState(true)
+  const [personas, setPersonas] = useState([])
 
-  const load = async () => {
-    setLoading(true)
-    const [t, h] = await Promise.all([
-      api.get('/tickets'),
-      api.get('/herramientas')
-    ])
-    setTickets(t.data.tickets)
-    setHerramientas(h.data.herramientas.filter(h => h.stockDisp > 0 && h.status === 'DISPONIBLE'))
-    setLoading(false)
-  }
+  const [t, h, p] = await Promise.all([
+  api.get('/tickets'),
+  api.get('/herramientas'),
+  api.get('/personas')
+])
+setTickets(t.data.tickets)
+setHerramientas(h.data.herramientas.filter(h => h.stockDisp > 0 && h.status === 'DISPONIBLE'))
+setPersonas(p.data.personas)
 
   useEffect(() => { load() }, [])
 
@@ -121,50 +120,54 @@ const handleCreate = async () => {
 
       {/* Modal nueva solicitud */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.9)'}}>
-          <div className="w-full max-w-md card p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.9)'}}>
+          <div className="w-full max-w-md card p-6" style={{background:'#0a0a0a', border:'1px solid #2a2a2a'}}>
             <div className="flex items-center justify-between mb-5">
               <div>
                 <div className="display text-xl" style={{color:'#f5a623'}}>SOLICITAR MATERIAL</div>
                 <div className="mono text-xs" style={{color:'#444'}}>EL ENCARGADO APROBARÁ TU SOLICITUD</div>
               </div>
-              <button onClick={() => setModal(false)} className="btn-ghost p-2 text-xs">✕</button>
+              <button onClick={() => setModal(false)} className="text-gray-500 hover:text-white">✕</button>
             </div>
+            
             <div className="space-y-4">
               <div>
                 <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MATERIAL *</label>
-                <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
+                <select className="input-field w-full" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
                   <option value="">Seleccionar material...</option>
                   {herramientas.map(h => (
-                    <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Disp: {h.stockDisp} {h.unidad}</option>
+                    <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Disp: {h.stockDisp}</option>
                   ))}
                 </select>
               </div>
+              
               <div>
                 <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>CANTIDAD *</label>
-                <input type="number" min="1" className="input-field mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} placeholder="0" />
+                <input type="number" min="1" className="input-field w-full mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} placeholder="0" />
               </div>
+
+              <div>
+                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>OPERADOR QUE SOLICITA *</label>
+                <select className="input-field w-full" value={form.operador} onChange={e => set('operador', e.target.value)}>
+                  <option value="">Seleccionar operador...</option>
+                  {personas.map(p => (
+                    <option key={p.id} value={p.nombre}>{p.nombre} — {p.empleado}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MOTIVO / JUSTIFICACIÓN *</label>
-                <textarea className="input-field h-24 resize-none" value={form.motivo} onChange={e => set('motivo', e.target.value)} placeholder="¿Para qué necesitas este material? ¿En qué orden de trabajo?" />
+                <textarea className="input-field w-full h-24 resize-none" value={form.motivo} onChange={e => set('motivo', e.target.value)} placeholder="¿Para qué necesitas este material?" />
               </div>
+
               <div className="px-3 py-2 border" style={{borderColor:'#2a2a2a', background:'#111'}}>
                 <div className="mono text-xs" style={{color:'#444'}}>
-                  👤 Solicitante: <span style={{color:'#888'}}>{user?.nombre} ({user?.empleado})</span>
+                  👤 Usuario: <span style={{color:'#888'}}>{user?.nombre}</span>
                 </div>
               </div>
-              <div>
-  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>
-    NOMBRE DEL OPERADOR QUE SOLICITA *
-  </label>
-  <input 
-    className="input-field" 
-    value={form.operador} 
-    onChange={e => set('operador', e.target.value)} 
-    placeholder="Nombre del operador en piso..." 
-  />
-</div>
-              <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest">
+
+              <button onClick={handleCreate} className="btn-accent w-full py-3 justify-center display tracking-widest text-sm mt-2">
                 ENVIAR SOLICITUD
               </button>
             </div>
