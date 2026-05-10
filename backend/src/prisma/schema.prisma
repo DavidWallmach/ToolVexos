@@ -199,18 +199,18 @@ model Persona {
   @@map("personas")
 }
 
-// ─── Tickets de solicitud ─────────────────────────────────────
 model Ticket {
-  id            String       @id @default(cuid())
-  folio         String       @unique
-  userId        String
-  herramientaId String
-  cantidad      Int
-  motivo        String
-  status        StatusTicket @default(PENDIENTE)
-  nota          String?      // Nota del encargado al aprobar/rechazar
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  folio           String       @unique
+  userId          String
+  herramientaId   String
+  cantidad        Int
+  cantidadDespachada Int       @default(0)
+  motivo          String
+  status          StatusTicket @default(PENDIENTE)
+  nota            String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   user        User        @relation(fields: [userId], references: [id])
   herramienta Herramienta @relation(fields: [herramientaId], references: [id])
@@ -221,7 +221,7 @@ model Ticket {
 
 enum StatusTicket {
   PENDIENTE
-  APROBADO
-  RECHAZADO
+  PARCIAL
   DESPACHADO
+  RECHAZADO
 }
