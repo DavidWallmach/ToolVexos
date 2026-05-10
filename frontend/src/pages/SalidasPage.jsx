@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 export default function SalidasPage() {
   const user = useAuthStore(s => s.user)
-  const canCreate = ['ADMIN','SUPERVISOR','JEFE_GRUPO'].includes(user?.role)
+  const canCreate = ['ADMIN', 'TOOLCRIP'].includes(user?.role)
   const [salidas, setSalidas] = useState([])
   const [herramientas, setHerramientas] = useState([])
   const [personas, setPersonas] = useState([])
