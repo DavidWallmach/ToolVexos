@@ -3,7 +3,7 @@ import { LayoutDashboard, Package, PackagePlus, PackageMinus, ArrowLeftRight, Wr
 import useAuthStore from '../../hooks/useAuth'
 import { useState, useEffect } from 'react'
 import api from '../../lib/api'
-import useNotificaciones from '../../hooks/useNotificaciones'
+import useNotificaciones from '../../hooks/useNotificaciones.jsx'
 
 const navEncargado = [
   { to: '/app', label: 'DASHBOARD', icon: LayoutDashboard, end: true },
