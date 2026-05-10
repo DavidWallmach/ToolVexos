@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 export default function PersonasPage() {
   const user = useAuthStore(s => s.user)
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = user?.role === ['ADMIN', 'TOOLCRIP'].includes(user?.role)
   const [personas, setPersonas] = useState([])
   const [salidas, setSalidas] = useState([])
   const [modal, setModal] = useState(false)
