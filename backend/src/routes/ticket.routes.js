@@ -9,7 +9,7 @@ const genFolio = async () => {
   return `TK-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`
 }
 
-// GET /api/tickets — Admin/Toolcrip ve todos, supervisor/jefe ve los suyos
+// GET — encargado ve todos, supervisor/jefe ve los suyos
 router.get('/', protect, async (req, res, next) => {
   try {
     const isEncargado = ['ADMIN', 'TOOLCRIP'].includes(req.user.role)
@@ -29,15 +29,15 @@ router.get('/', protect, async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
-// POST /api/tickets — Supervisor/Jefe crea ticket
+// POST — crear ticket
 router.post('/', protect, async (req, res, next) => {
   try {
     const { herramientaId, cantidad, motivo } = req.body
-    if (!herramientaId || !cantidad || !motivo) return res.status(400).json({ error: 'Herramienta, cantidad y motivo son obligatorios.' })
-
+    if (!herramientaId || !cantidad || !motivo) {
+      return res.status(400).json({ error: 'Herramienta, cantidad y motivo son obligatorios.' })
+    }
     const h = await prisma.herramienta.findUnique({ where: { id: herramientaId } })
     if (!h) return res.status(404).json({ error: 'Herramienta no encontrada.' })
-    if (h.stockDisp < +cantidad) return res.status(400).json({ error: `Stock insuficiente. Disponible: ${h.stockDisp} ${h.unidad}` })
 
     const folio = await genFolio()
     const ticket = await prisma.ticket.create({
@@ -51,37 +51,57 @@ router.post('/', protect, async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
-// POST /api/tickets/:id/aprobar — Solo encargado
-router.post('/:id/aprobar', protect, toolcripUp, async (req, res, next) => {
+// POST /despachar — despacho total o parcial
+router.post('/:id/despachar', protect, toolcripUp, async (req, res, next) => {
   try {
-    const { nota } = req.body
+    const { cantidadDespachar, nota } = req.body
+
     const ticket = await prisma.ticket.findUnique({
       where: { id: req.params.id },
       include: { herramienta: true, user: true }
     })
     if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' })
-    if (ticket.status !== 'PENDIENTE') return res.status(400).json({ error: 'El ticket ya fue procesado.' })
+    if (!['PENDIENTE', 'PARCIAL'].includes(ticket.status)) {
+      return res.status(400).json({ error: 'El ticket ya fue procesado.' })
+    }
 
     const h = ticket.herramienta
-    if (h.stockDisp < ticket.cantidad) return res.status(400).json({ error: 'Stock insuficiente para despachar.' })
+    const cantPedida = ticket.cantidad - ticket.cantidadDespachada
+    const cantDespachar = Math.min(+cantidadDespachar, h.stockDisp, cantPedida)
 
-    // Aprobar ticket y descontar stock
+    if (cantDespachar <= 0) {
+      return res.status(400).json({ error: 'No hay stock disponible para despachar.' })
+    }
+
+    const totalDespachado = ticket.cantidadDespachada + cantDespachar
+    const esCompleto = totalDespachado >= ticket.cantidad
+    const nuevoStatus = esCompleto ? 'DESPACHADO' : 'PARCIAL'
+    const nuevoStock = h.stockDisp - cantDespachar
+
+    // Actualizar ticket
     await prisma.ticket.update({
       where: { id: ticket.id },
-      data: { status: 'DESPACHADO', nota }
+      data: {
+        status: nuevoStatus,
+        cantidadDespachada: totalDespachado,
+        nota: nota || ticket.nota
+      }
     })
 
-    const nuevoStock = h.stockDisp - ticket.cantidad
+    // Descontar stock
     await prisma.herramienta.update({
       where: { id: h.id },
-      data: { stockDisp: nuevoStock, status: nuevoStock === 0 ? 'AGOTADO' : 'DISPONIBLE' }
+      data: {
+        stockDisp: nuevoStock,
+        status: nuevoStock === 0 ? 'AGOTADO' : 'DISPONIBLE'
+      }
     })
 
-    // Registrar como salida
+    // Registrar salida
     await prisma.salida.create({
       data: {
         herramientaId: h.id,
-        cantidad: ticket.cantidad,
+        cantidad: cantDespachar,
         solicitante: ticket.user.nombre,
         departamento: ticket.user.role,
         proposito: ticket.motivo,
@@ -95,25 +115,33 @@ router.post('/:id/aprobar', protect, toolcripUp, async (req, res, next) => {
         herramientaId: h.id,
         userId: req.user.id,
         tipo: 'SALIDA',
-        cantidad: ticket.cantidad,
+        cantidad: cantDespachar,
         stockAntes: h.stockDisp,
         stockDespues: nuevoStock,
-        nota: `Ticket ${ticket.folio} — ${ticket.user.nombre}`
+        nota: `Ticket ${ticket.folio} — ${esCompleto ? 'COMPLETO' : 'PARCIAL'} — ${ticket.user.nombre}`
       }
     })
 
-    res.json({ message: 'Ticket aprobado y despachado.' })
+    res.json({
+      message: esCompleto
+        ? 'Ticket despachado completamente.'
+        : `Despacho parcial: ${cantDespachar} de ${ticket.cantidad} ${h.unidad}. Pendiente: ${ticket.cantidad - totalDespachado}`,
+      despachado: cantDespachar,
+      pendiente: ticket.cantidad - totalDespachado,
+      status: nuevoStatus
+    })
   } catch (err) { next(err) }
 })
 
-// POST /api/tickets/:id/rechazar — Solo encargado
+// POST /rechazar
 router.post('/:id/rechazar', protect, toolcripUp, async (req, res, next) => {
   try {
     const { nota } = req.body
     const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id } })
     if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' })
-    if (ticket.status !== 'PENDIENTE') return res.status(400).json({ error: 'El ticket ya fue procesado.' })
-
+    if (!['PENDIENTE', 'PARCIAL'].includes(ticket.status)) {
+      return res.status(400).json({ error: 'El ticket ya fue procesado.' })
+    }
     await prisma.ticket.update({
       where: { id: ticket.id },
       data: { status: 'RECHAZADO', nota }
