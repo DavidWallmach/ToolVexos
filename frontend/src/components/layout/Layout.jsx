@@ -3,8 +3,8 @@ import { LayoutDashboard, Package, PackagePlus, PackageMinus, ArrowLeftRight, Wr
 import useAuthStore from '../../hooks/useAuth'
 import { useState, useEffect } from 'react'
 import api from '../../lib/api'
+import useNotificaciones from '../../hooks/useNotificaciones'
 
-// Nav completo para ADMIN y TOOLCRIP
 const navEncargado = [
   { to: '/app', label: 'DASHBOARD', icon: LayoutDashboard, end: true },
   { to: '/app/inventario', label: 'MATERIALES', icon: Package },
@@ -19,7 +19,6 @@ const navEncargado = [
   { to: '/app/usuarios', label: 'USUARIOS', icon: Users, adminOnly: true },
 ]
 
-// Nav restringido para SUPERVISOR y JEFE_GRUPO
 const navSolicitor = [
   { to: '/app/disponible', label: 'DISPONIBLE', icon: Package, end: true },
   { to: '/app/mis-tickets', label: 'MIS TICKETS', icon: Ticket },
@@ -30,10 +29,12 @@ export default function Layout() {
   const navigate = useNavigate()
   const [time, setTime] = useState(new Date())
   const [alertCount, setAlertCount] = useState(0)
-  const [ticketCount, setTicketCount] = useState(0)
 
   const isEncargado = ['ADMIN', 'TOOLCRIP'].includes(user?.role)
   const isSolicitor = ['SUPERVISOR', 'JEFE_GRUPO'].includes(user?.role)
+
+  // Hook de notificaciones en tiempo real
+  const { pendientes: ticketCount } = useNotificaciones()
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
@@ -44,9 +45,6 @@ export default function Layout() {
     if (isEncargado) {
       api.get('/herramientas').then(r => {
         setAlertCount(r.data.herramientas.filter(h => h.stockDisp <= h.stockMin && h.status !== 'BAJA').length)
-      }).catch(() => {})
-      api.get('/tickets?status=PENDIENTE').then(r => {
-        setTicketCount(r.data.tickets.length)
       }).catch(() => {})
     }
   }, [isEncargado])
@@ -80,13 +78,29 @@ export default function Layout() {
               <Icon size={13} />
               <span style={{fontSize:'11px', letterSpacing:'0.06em', flex:1}}>{label}</span>
               {badge && getBadgeCount(badge) > 0 && (
-                <span className="mono font-bold px-1.5 py-0.5" style={{background: badge==='tickets'?'#f5a623':'#e74c3c', color: badge==='tickets'?'#000':'#fff', fontSize:'9px', borderRadius:'2px'}}>
+                <span className="mono font-bold px-1.5 py-0.5"
+                  style={{
+                    background: badge==='tickets' ? '#f5a623' : '#e74c3c',
+                    color: badge==='tickets' ? '#000' : '#fff',
+                    fontSize:'9px', borderRadius:'2px',
+                    animation: badge==='tickets' ? 'pulse 1.5s infinite' : 'none'
+                  }}>
                   {getBadgeCount(badge)}
                 </span>
               )}
             </NavLink>
           ))}
         </nav>
+
+        {/* Indicador de notificaciones activas */}
+        {isEncargado && (
+          <div className="px-4 py-2 border-t" style={{borderColor:'#1a1a1a'}}>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full" style={{background:'#2ecc71', boxShadow:'0 0 4px #2ecc71'}} />
+              <span className="mono" style={{color:'#333', fontSize:'9px', letterSpacing:'0.1em'}}>NOTIFICACIONES ACTIVAS</span>
+            </div>
+          </div>
+        )}
 
         <div className="p-4 border-t" style={{borderColor:'#1a1a1a'}}>
           <div className="mb-3 pb-3 border-b" style={{borderColor:'#1a1a1a'}}>
@@ -104,6 +118,14 @@ export default function Layout() {
           </button>
         </div>
       </aside>
+
+      {/* Animación pulse para el badge */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+      `}</style>
 
       <main className="flex-1 overflow-y-auto">
         <Outlet />
