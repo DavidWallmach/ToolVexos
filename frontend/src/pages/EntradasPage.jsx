@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 export default function EntradasPage() {
   const user = useAuthStore(s => s.user)
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = ['ADMIN', 'TOOLCRIP'].includes(user?.role)
   const [entradas, setEntradas] = useState([])
   const [herramientas, setHerramientas] = useState([])
   const [modal, setModal] = useState(false)
