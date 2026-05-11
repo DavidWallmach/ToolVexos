@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
-import { protect, supervisorUp } from '../middleware/auth.middleware.js'
+import { protect, toolcripUp } from '../middleware/auth.middleware.js'
 const router = Router()
 const prisma = new PrismaClient()
 
@@ -14,7 +14,7 @@ router.get('/', protect, async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
-router.post('/', protect, supervisorUp, async (req, res, next) => {
+router.post('/', protect, toolcripUp, async (req, res, next) => {
   try {
     const { herramientaId, cantidad, solicitante, departamento, proposito } = req.body
     const h = await prisma.herramienta.findUnique({ where: { id: herramientaId } })
@@ -39,5 +39,4 @@ router.post('/', protect, supervisorUp, async (req, res, next) => {
     res.status(201).json({ salida })
   } catch (err) { next(err) }
 })
-
 export default router
