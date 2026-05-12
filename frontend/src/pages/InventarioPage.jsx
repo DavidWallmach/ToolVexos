@@ -49,13 +49,12 @@ export default function InventarioPage() {
           <div className="display text-3xl" style={{color:'#e8e8e8'}}>INVENTARIO</div>
           <div className="mono text-xs mt-0.5" style={{color:'#444'}}>{herramientas.length} HERRAMIENTAS REGISTRADAS</div>
         </div>
-        {user?.role === ['ADMIN', 'TOOLCRIP'].includes(user?.role) && (
-          <button onClick={() => { setSelected(null); setModal(true) }} className="btn-accent display tracking-widest text-sm">
-            <Plus size={14} /> AGREGAR
-          </button>
-        )}
-      </div>
-
+        {['ADMIN', 'TOOLCRIP'].includes(user?.role) && (
+  <button onClick={() => { setSelected(null); setModal(true) }} className="btn-accent display tracking-widest text-sm">
+    <Plus size={14} /> AGREGAR
+  </button>
+)}
+</div>
       {/* Filtros */}
       <div className="flex gap-3 mb-6">
         <div className="flex-1 relative">
