@@ -92,12 +92,20 @@ export default function EntradasPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MATERIAL *</label>
-                <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
-                  <option value="">Seleccionar...</option>
-                  {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Stock: {h.stockDisp}</option>)}
-                </select>
-              </div>
+  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MATERIAL *</label>
+  <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
+    <option value="">Seleccionar...</option>
+    {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Stock: {h.stockDisp}</option>)}
+  </select>
+  <button
+    type="button"
+    onClick={() => { setModal(false); window.location.href = '/app/inventario' }}
+    className="mono text-xs mt-1.5 flex items-center gap-1"
+    style={{color:'#f5a623', background:'none', border:'none', cursor:'pointer', padding:0}}
+  >
+    + ¿Material nuevo? Ir a Materiales →
+  </button>
+</div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>CANTIDAD *</label>
