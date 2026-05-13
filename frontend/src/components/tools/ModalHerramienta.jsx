@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 export default function ModalHerramienta({ herramienta, categorias, onClose, onSave }) {
   const user = useAuthStore(s => s.user)
   const isEdit = !!herramienta
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = ['ADMIN', 'TOOLCRIP'].includes(user?.role)
 
   const [form, setForm] = useState({
     codigo: herramienta?.codigo || '',
