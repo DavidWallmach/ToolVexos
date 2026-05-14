@@ -16,7 +16,7 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
     categoriaId: herramienta?.categoriaId || '',
     stockTotal: herramienta?.stockTotal || '',
     stockMin: herramienta?.stockMin || 1,
-    ubicacion: herramienta?.ubicacion || '',
+    ubicacion_texto: herramienta?.ubicacion_texto || '',
     unidad: herramienta?.unidad || 'pza',
   })
 
@@ -94,7 +94,7 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
                 <Row label="STOCK MÍN."><input type="number" className="input-field mono" value={form.stockMin} onChange={e => set('stockMin', e.target.value)} disabled={!isAdmin} /></Row>
                 <Row label="UNIDAD"><input className="input-field mono" value={form.unidad} onChange={e => set('unidad', e.target.value)} placeholder="pza" disabled={!isAdmin} /></Row>
               </div>
-              <Row label="UBICACIÓN"><input className="input-field" value={form.ubicacion} onChange={e => set('ubicacion', e.target.value)} placeholder="Estante A-3" disabled={!isAdmin} /></Row>
+              <Row label="UBICACIÓN"><input className="input-field" value={form.ubicacion_texto} onChange={e => set('ubicacion_texto', e.target.value)} placeholder="Estante A-3" disabled={!isAdmin} /></Row>
               {isAdmin && (
                 <button onClick={handleSave} disabled={loading} className="btn-accent w-full justify-center display tracking-widest mt-2">
                   {loading ? 'GUARDANDO...' : isEdit ? 'ACTUALIZAR' : 'REGISTRAR'}
