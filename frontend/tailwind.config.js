@@ -4,29 +4,15 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: { 'sm':'640px', 'md':'768px', 'lg':'1024px', 'xl':'1280px' },
       colors: {
-        brand: {
-          50:  '#f0f9ff',
-          100: '#e0f2fe',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          900: '#0c4a6e',
-        },
-        surface: {
-          DEFAULT: '#0f172a',
-          card: '#1e293b',
-          hover: '#334155',
-        }
+        brand: { 400:'#f5a623', 500:'#e8950f' },
+        surface: { DEFAULT:'#0a0a0a', card:'#111111', hover:'#1a1a1a' }
       },
       fontFamily: {
-        sans: ['Sora', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-      },
-      borderRadius: {
-        xl: '1rem',
-        '2xl': '1.5rem',
+        sans: ['IBM Plex Sans', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+        display: ['Bebas Neue', 'sans-serif'],
       },
     },
   },

@@ -10,7 +10,6 @@
   --surface2: #1a1a1a;
   --border: #2a2a2a;
   --accent: #f5a623;
-  --accent2: #e8950f;
   --text: #e8e8e8;
   --muted: #666;
   --green: #2ecc71;
@@ -20,12 +19,7 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; }
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--surface); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -54,16 +48,27 @@
   .badge-baja { @apply badge bg-[#333] text-[#666] border border-[#2a2a2a]; }
 
   .table-row { @apply border-b border-[#1a1a1a] hover:bg-[#151515] transition-colors; }
-  .th { @apply px-4 py-3 text-left text-xs font-mono text-[#555] uppercase tracking-widest bg-[#111]; }
-  .td { @apply px-4 py-3 text-sm; }
+  .th { @apply px-3 py-3 text-left text-xs font-mono text-[#555] uppercase tracking-widest bg-[#111]; }
+  .td { @apply px-3 py-3 text-sm; }
 
-  .stat-card {
-    @apply p-5 border border-[#2a2a2a] bg-[#111];
-    border-left: 2px solid var(--accent);
-  }
+  .stat-card { @apply p-4 border border-[#2a2a2a] bg-[#111]; border-left: 2px solid var(--accent); }
+
   .nav-item {
     @apply flex items-center gap-3 px-3 py-2.5 text-sm text-[#666] hover:text-[#e8e8e8] hover:bg-[#1a1a1a] transition-all cursor-pointer;
     font-family: 'IBM Plex Mono', monospace;
   }
-  .nav-item.active { @apply text-[#f5a623] bg-[#f5a623]/5 border-r-2 border-[#f5a623]; }
+  .nav-item.active { @apply text-[#f5a623] bg-[#f5a623]/5; border-right: 2px solid #f5a623; }
+
+  /* Responsive utilities */
+  .page-padding { @apply p-4 sm:p-6 lg:p-8; }
+  .table-responsive { @apply overflow-x-auto; }
+  .grid-responsive-2 { @apply grid grid-cols-1 sm:grid-cols-2 gap-4; }
+  .grid-responsive-3 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4; }
+  .grid-responsive-4 { @apply grid grid-cols-2 lg:grid-cols-4 gap-4; }
+}
+
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+  .th { padding: 0.5rem 0.75rem !important; font-size: 0.7rem; }
+  .td { padding: 0.5rem 0.75rem !important; font-size: 0.75rem; }
 }
