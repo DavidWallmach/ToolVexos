@@ -67,6 +67,25 @@
   .grid-responsive-4 { @apply grid grid-cols-2 lg:grid-cols-4 gap-4; }
 }
 
+.rainbow-banner-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f5a623, #2ecc71, #3b82f6);
+  background-size: 200% 100%;
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to top, #000, transparent 75%);
+  mask-image: linear-gradient(to top, #000, transparent 75%);
+  animation: rainbow-banner 8s linear infinite;
+}
+
+@keyframes rainbow-banner {
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rainbow-banner-layer { animation: none; }
+}
+
 @media (max-width: 640px) {
   .hide-mobile { display: none !important; }
   .th { padding: 0.5rem 0.75rem !important; font-size: 0.7rem; }

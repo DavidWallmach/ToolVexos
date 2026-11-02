@@ -3,6 +3,7 @@ import { Package, ArrowLeftRight, AlertTriangle, Wrench, Ticket, TrendingUp } fr
 import api from '../lib/api'
 import useAuthStore from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import Banner from '../components/layout/Banner'
 
 const tipoColor = { ENTRADA:'#2ecc71', SALIDA:'#f5a623', DEVOLUCION:'#3b82f6', AJUSTE:'#8b5cf6', BAJA:'#e74c3c' }
 
@@ -61,6 +62,8 @@ export default function DashboardPage() {
   const maxMovs = stats?.movsSemana?.length > 0 ? Math.max(...stats.movsSemana.map(d => Math.max(d.entradas || 0, d.salidas || 0))) : 1
 
   return (
+    <>
+    <Banner id="dashboard-novedades" variant="rainbow" message="🎉 ¡Próximamente nuevas funciones!" />
     <div className="p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
@@ -255,6 +258,7 @@ export default function DashboardPage() {
         </>
       )}
     </div>
+    </>
   )
 }
 
