@@ -1,21 +1,45 @@
-import { useEffect, useState, useRef } from 'react'
-import { CheckCircle, XCircle, Clock, AlertTriangle, Printer } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { CheckCircle, XCircle, AlertTriangle, Printer, Ticket, CloudOff } from 'lucide-react'
 import api from '../lib/api'
 import toast from 'react-hot-toast'
 import useAuthStore from '../hooks/useAuth'
+import { Campo, EstadoVacio, Modal, PageHeader, Segmentos } from '../components/ui'
 
-const statusColor = {
-  PENDIENTE: '#f5a623',
-  PARCIAL: '#3b82f6',
-  DESPACHADO: '#2ecc71',
-  RECHAZADO: '#e74c3c'
+const STATUS = {
+  PENDIENTE: ['badge-low', 'Pendiente', 'var(--accent)'],
+  PARCIAL: ['badge-maint', 'Parcial', 'var(--blue)'],
+  DESPACHADO: ['badge-ok', 'Despachado', 'var(--green)'],
+  RECHAZADO: ['badge-danger', 'Rechazado', 'var(--red)'],
 }
-const statusBg = {
-  PENDIENTE: '#f5a62310',
-  PARCIAL: '#3b82f610',
-  DESPACHADO: '#2ecc7110',
-  RECHAZADO: '#e74c3c10'
+const FILTROS = [...Object.entries(STATUS).map(([valor, [, etiqueta]]) => ({ valor, etiqueta })), { valor: 'TODOS', etiqueta: 'Todos' }]
+const ROLES = { ADMIN: 'Administrador', TOOLCRIP: 'Toolcrip', SUPERVISOR: 'Supervisor', JEFE_GRUPO: 'Jefe de grupo', OPERADOR: 'Operador' }
+
+const separarMotivo = (motivo = '') => {
+  const [texto, operador] = motivo.split('| Operador:')
+  return { texto: texto.trim(), operador: operador?.trim() }
 }
+const fechaHora = (f) => new Date(f).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
+
+// Se usan tanto en la vista previa (anidados en .comprobante) como en la ventana de impresión
+const ESTILOS_COMPROBANTE = `
+  .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+  .logo { font-size: 28px; font-weight: 900; letter-spacing: 4px; }
+  .logo span { color: #000; }
+  .subtitle { font-size: 9px; letter-spacing: 2px; margin-top: 2px; }
+  .folio { font-size: 18px; font-weight: bold; text-align: center; margin: 10px 0; letter-spacing: 2px; border: 2px solid #000; padding: 6px; }
+  .section { margin: 8px 0; }
+  .label { font-size: 8px; letter-spacing: 1px; color: #666; text-transform: uppercase; }
+  .value { font-size: 13px; font-weight: bold; margin-top: 2px; }
+  .value-sm { font-size: 11px; margin-top: 2px; }
+  .divider { border-top: 1px dashed #000; margin: 8px 0; }
+  .cantidad-box { border: 2px solid #000; padding: 8px; text-align: center; margin: 10px 0; }
+  .cantidad-num { font-size: 36px; font-weight: 900; line-height: 1; }
+  .cantidad-unit { font-size: 12px; letter-spacing: 2px; }
+  .status { text-align: center; font-size: 11px; font-weight: bold; letter-spacing: 2px; padding: 4px; border: 1px solid #000; margin: 8px 0; }
+  .footer { text-align: center; font-size: 8px; color: #666; margin-top: 12px; padding-top: 8px; border-top: 1px solid #ccc; }
+  .firma { margin-top: 20px; border-top: 1px solid #000; padding-top: 4px; font-size: 9px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+`
 
 // ─── Componente de impresión ──────────────────────────────────
 function TicketPrint({ ticket, encargado, onClose }) {
@@ -33,23 +57,7 @@ function TicketPrint({ ticket, encargado, onClose }) {
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Courier New', monospace; background: #fff; color: #000; padding: 20px; width: 320px; }
-          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-          .logo { font-size: 28px; font-weight: 900; letter-spacing: 4px; }
-          .logo span { color: #000; }
-          .subtitle { font-size: 9px; letter-spacing: 2px; margin-top: 2px; }
-          .folio { font-size: 18px; font-weight: bold; text-align: center; margin: 10px 0; letter-spacing: 2px; border: 2px solid #000; padding: 6px; }
-          .section { margin: 8px 0; }
-          .label { font-size: 8px; letter-spacing: 1px; color: #666; text-transform: uppercase; }
-          .value { font-size: 13px; font-weight: bold; margin-top: 2px; }
-          .value-sm { font-size: 11px; margin-top: 2px; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          .cantidad-box { border: 2px solid #000; padding: 8px; text-align: center; margin: 10px 0; }
-          .cantidad-num { font-size: 36px; font-weight: 900; line-height: 1; }
-          .cantidad-unit { font-size: 12px; letter-spacing: 2px; }
-          .status { text-align: center; font-size: 11px; font-weight: bold; letter-spacing: 2px; padding: 4px; border: 1px solid #000; margin: 8px 0; }
-          .footer { text-align: center; font-size: 8px; color: #666; margin-top: 12px; padding-top: 8px; border-top: 1px solid #ccc; }
-          .firma { margin-top: 20px; border-top: 1px solid #000; padding-top: 4px; font-size: 9px; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+          ${ESTILOS_COMPROBANTE}
           @media print {
             body { width: 100%; }
           }
@@ -64,127 +72,162 @@ function TicketPrint({ ticket, encargado, onClose }) {
     win.document.close()
   }
 
-  const motivo = ticket.motivo.includes('| Operador:')
-    ? ticket.motivo.split('| Operador:')[0].trim()
-    : ticket.motivo
-  const operador = ticket.motivo.includes('| Operador:')
-    ? ticket.motivo.split('| Operador:')[1].trim()
-    : '—'
-
-  const now = new Date()
-  const fechaImpresion = now.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
+  const { texto: motivo, operador } = separarMotivo(ticket.motivo)
+  const fechaImpresion = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
+  const notaFina = { fontSize: '10px', color: '#555' }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.92)'}}>
-      <div className="card" style={{maxWidth:'480px', width:'100%', maxHeight:'90vh', overflowY:'auto'}}>
-        {/* Toolbar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'var(--surface2)'}}>
-          <div className="display text-xl" style={{color:'#f5a623'}}>VISTA PREVIA — {ticket.folio}</div>
-          <div className="flex gap-2">
-            <button onClick={handlePrint} className="btn-accent display tracking-widest text-sm">
-              <Printer size={14} /> IMPRIMIR
-            </button>
-            <button onClick={onClose} className="btn-ghost px-3 py-2 text-xs">✕</button>
+    <Modal titulo="Vista previa del comprobante" subtitulo={ticket.folio} onCerrar={onClose} ancho="max-w-lg">
+      <button onClick={handlePrint} className="btn-accent w-full justify-center mb-4"><Printer size={16} /> Imprimir</button>
+
+      <style>{`.comprobante { ${ESTILOS_COMPROBANTE} }`}</style>
+      {/* El contenido se copia a la ventana de impresión, por eso conserva colores fijos sobre blanco */}
+      <div ref={printRef} className="comprobante rounded-lg" style={{ fontFamily: 'Courier New, monospace', color: '#000', background: '#fff', padding: '16px' }}>
+        <div className="header">
+          <div className="logo">TOOL<span>CRIP</span></div>
+          <div className="subtitle">SISTEMA DE GESTIÓN DE ALMACÉN</div>
+          <div className="subtitle" style={{ marginTop: '4px' }}>COMPROBANTE DE SALIDA DE MATERIAL</div>
+        </div>
+
+        <div className="folio">{ticket.folio}</div>
+
+        <div className="grid">
+          <div className="section">
+            <div className="label">Solicitante</div>
+            <div className="value-sm">{ticket.user?.nombre}</div>
+            <div style={notaFina}>{ticket.user?.empleado} · {ticket.user?.role}</div>
+          </div>
+          <div className="section">
+            <div className="label">Operador</div>
+            <div className="value-sm">{operador || '—'}</div>
           </div>
         </div>
 
-        {/* Preview del ticket */}
-        <div className="p-6">
-          <div ref={printRef} style={{fontFamily:'Courier New, monospace', color:'#000', background:'#fff', padding:'16px', border:'1px solid #ddd'}}>
-            {/* Header */}
-            <div className="header">
-              <div className="logo">TOOL<span>CRIP</span></div>
-              <div className="subtitle">SISTEMA DE GESTIÓN DE ALMACÉN</div>
-              <div className="subtitle" style={{marginTop:'4px'}}>COMPROBANTE DE SALIDA DE MATERIAL</div>
-            </div>
+        <div className="divider" />
 
-            {/* Folio */}
-            <div className="folio">{ticket.folio}</div>
+        <div className="section">
+          <div className="label">Material</div>
+          <div className="value">{ticket.herramienta?.nombre}</div>
+          <div style={notaFina}>{ticket.herramienta?.codigo}</div>
+        </div>
 
-            {/* Info principal */}
-            <div className="grid">
-              <div className="section">
-                <div className="label">Solicitante</div>
-                <div className="value-sm">{ticket.user?.nombre}</div>
-                <div style={{fontSize:'12px', color:'var(--muted)'}}>{ticket.user?.empleado} · {ticket.user?.role}</div>
-              </div>
-              <div className="section">
-                <div className="label">Operador</div>
-                <div className="value-sm">{operador}</div>
-              </div>
-            </div>
+        <div className="cantidad-box">
+          <div className="label">Cantidad despachada</div>
+          <div className="cantidad-num">{ticket.cantidadDespachada || ticket.cantidad}</div>
+          <div className="cantidad-unit">{ticket.herramienta?.unidad}</div>
+          {ticket.cantidadDespachada < ticket.cantidad && (
+            <div style={{ ...notaFina, marginTop: '4px' }}>de {ticket.cantidad} solicitadas — DESPACHO PARCIAL</div>
+          )}
+        </div>
 
-            <div className="divider" />
+        <div className="section">
+          <div className="label">Motivo / Justificación</div>
+          <div className="value-sm">{motivo}</div>
+        </div>
 
-            {/* Material */}
-            <div className="section">
-              <div className="label">Material</div>
-              <div className="value">{ticket.herramienta?.nombre}</div>
-              <div style={{fontSize:'12px', color:'var(--muted)'}}>{ticket.herramienta?.codigo}</div>
-            </div>
+        <div className="divider" />
 
-            {/* Cantidad */}
-            <div className="cantidad-box">
-              <div className="label">Cantidad despachada</div>
-              <div className="cantidad-num">{ticket.cantidadDespachada || ticket.cantidad}</div>
-              <div className="cantidad-unit">{ticket.herramienta?.unidad}</div>
-              {ticket.cantidadDespachada < ticket.cantidad && (
-                <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'4px'}}>
-                  de {ticket.cantidad} solicitadas — DESPACHO PARCIAL
-                </div>
-              )}
-            </div>
+        <div className="grid">
+          <div className="section">
+            <div className="label">Fecha solicitud</div>
+            <div style={{ fontSize: '10px' }}>{fechaHora(ticket.createdAt)}</div>
+          </div>
+          <div className="section">
+            <div className="label">Fecha impresión</div>
+            <div style={{ fontSize: '10px' }}>{fechaImpresion}</div>
+          </div>
+        </div>
 
-            {/* Motivo */}
-            <div className="section">
-              <div className="label">Motivo / Justificación</div>
-              <div className="value-sm">{motivo}</div>
-            </div>
+        <div className="status">{ticket.status}</div>
 
-            <div className="divider" />
+        {ticket.nota && (
+          <div className="section">
+            <div className="label">Nota del encargado</div>
+            <div style={{ fontSize: '10px' }}>{ticket.nota}</div>
+          </div>
+        )}
 
-            {/* Fechas y status */}
-            <div className="grid">
-              <div className="section">
-                <div className="label">Fecha solicitud</div>
-                <div style={{fontSize:'12px'}}>{new Date(ticket.createdAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})}</div>
-              </div>
-              <div className="section">
-                <div className="label">Fecha impresión</div>
-                <div style={{fontSize:'12px'}}>{fechaImpresion}</div>
-              </div>
-            </div>
+        <div className="divider" />
 
-            <div className="status">{ticket.status}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+          <div className="firma"><div style={notaFina}>Firma Solicitante</div></div>
+          <div className="firma">
+            <div style={notaFina}>Firma Encargado Tool Crib</div>
+            {encargado && <div style={{ fontSize: '10px', marginTop: '2px' }}>{encargado}</div>}
+          </div>
+        </div>
 
-            {ticket.nota && (
-              <div className="section">
-                <div className="label">Nota del encargado</div>
-                <div style={{fontSize:'12px'}}>{ticket.nota}</div>
-              </div>
-            )}
+        <div className="footer">
+          <div>TOOLCRIP — Sistema de Gestión de Almacén</div>
+          <div>Este documento es un comprobante oficial de salida de material</div>
+        </div>
+      </div>
+    </Modal>
+  )
+}
 
-            <div className="divider" />
+function TarjetaTicket({ t, onDespachar, onRechazar, onImprimir }) {
+  const [claseBadge, etiqueta, color] = STATUS[t.status] || ['badge-baja', t.status, 'var(--muted)']
+  const despachada = t.cantidadDespachada || 0
+  const pendiente = t.cantidad - despachada
+  const stockDisp = t.herramienta?.stockDisp || 0
+  const unidad = t.herramienta?.unidad
+  const abierto = ['PENDIENTE', 'PARCIAL'].includes(t.status)
+  const imprimible = ['DESPACHADO', 'PARCIAL'].includes(t.status)
+  const { texto, operador } = separarMotivo(t.motivo)
 
-            {/* Firma */}
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginTop:'16px'}}>
-              <div className="firma">
-                <div style={{fontSize:'12px', color:'var(--muted)'}}>Firma Solicitante</div>
-              </div>
-              <div className="firma">
-                <div style={{fontSize:'12px', color:'var(--muted)'}}>Firma Encargado Tool Crib</div>
-                {encargado && <div style={{fontSize:'12px', marginTop:'2px'}}>{encargado}</div>}
-              </div>
-            </div>
+  return (
+    <article className="card p-4 sm:p-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
+        <span className="mono text-sm font-semibold" style={{ color: 'var(--accent)' }}>{t.folio}</span>
+        <span className={claseBadge}>{etiqueta}</span>
+        <span className="text-xs sm:ml-auto" style={{ color: 'var(--muted)' }}>{fechaHora(t.createdAt)}</span>
+      </div>
 
-            <div className="footer">
-              <div>TOOLCRIP — Sistema de Gestión de Almacén</div>
-              <div>Este documento es un comprobante oficial de salida de material</div>
-            </div>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 mb-3">
+        <div className="min-w-0 flex-1 basis-56">
+          <div className="text-base font-semibold" style={{ color: 'var(--text)' }}>{t.herramienta?.nombre}</div>
+          <div className="text-sm mt-0.5" style={{ color: 'var(--text-2)' }}>{texto}</div>
+        </div>
+        <div className="basis-44">
+          <div className="text-sm" style={{ color: 'var(--text-2)' }}>
+            <b className="text-xl font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{despachada}</b> de {t.cantidad} {unidad} despachadas
+          </div>
+          <div className="h-1.5 mt-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface2)' }}>
+            <div className="h-full rounded-full" style={{ width: `${(despachada / t.cantidad) * 100}%`, background: color }} />
           </div>
         </div>
       </div>
-    </div>
+
+      <div className="text-sm" style={{ color: 'var(--muted)' }}>
+        Solicita <span style={{ color: 'var(--text-2)' }}>{t.user?.nombre}</span> · {ROLES[t.user?.role] || t.user?.role}
+        {operador && <> · Para <span style={{ color: 'var(--text-2)' }}>{operador}</span></>}
+      </div>
+
+      {t.nota && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-sm" style={{ background: 'var(--surface2)', color: 'var(--text-2)' }}>
+          <span style={{ color: 'var(--muted)' }}>Nota: </span>{t.nota}
+        </div>
+      )}
+
+      {(abierto || imprimible) && (
+        <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+          {abierto && (
+            <span className="flex items-center gap-1.5 text-sm w-full sm:w-auto sm:mr-auto" style={{ color: stockDisp > 0 ? 'var(--text-2)' : 'var(--red)' }}>
+              {stockDisp === 0 && <AlertTriangle size={15} />}
+              {stockDisp > 0 ? `${stockDisp} ${unidad} en stock · faltan ${pendiente}` : 'Sin stock disponible'}
+            </span>
+          )}
+          {imprimible && <button onClick={onImprimir} className="btn-ghost"><Printer size={15} /> Imprimir</button>}
+          {abierto && <button onClick={onRechazar} className="btn-danger"><XCircle size={15} /> Rechazar</button>}
+          {abierto && (
+            <button onClick={onDespachar} disabled={stockDisp === 0} className="btn-accent disabled:opacity-40 disabled:cursor-not-allowed">
+              <CheckCircle size={15} /> Despachar
+            </button>
+          )}
+        </div>
+      )}
+    </article>
   )
 }
 
@@ -194,293 +237,135 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState([])
   const [filter, setFilter] = useState('PENDIENTE')
   const [loading, setLoading] = useState(true)
+  const [fallo, setFallo] = useState(false)
   const [despachoModal, setDespachoModal] = useState(null)
   const [rechazarModal, setRechazarModal] = useState(null)
   const [printTicket, setPrintTicket] = useState(null)
   const [cantidadDespachar, setCantidadDespachar] = useState('')
   const [nota, setNota] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const ultimaCarga = useRef(0)
 
   const load = async () => {
+    const id = ++ultimaCarga.current
     setLoading(true)
-    const params = filter !== 'TODOS' ? { status: filter } : {}
-    const { data } = await api.get('/tickets', { params })
-    setTickets(data.tickets)
-    setLoading(false)
+    setFallo(false)
+    try {
+      const params = filter !== 'TODOS' ? { status: filter } : {}
+      const { data } = await api.get('/tickets', { params })
+      if (id === ultimaCarga.current) setTickets(data.tickets)
+    } catch {
+      if (id === ultimaCarga.current) setFallo(true)
+    }
+    if (id === ultimaCarga.current) setLoading(false)
   }
 
   useEffect(() => { load() }, [filter])
 
-  const handleDespachar = async () => {
-    if (!cantidadDespachar || +cantidadDespachar <= 0) return toast.error('Ingresa una cantidad válida')
-    try {
-      const { data } = await api.post(`/tickets/${despachoModal.id}/despachar`, {
-        cantidadDespachar: +cantidadDespachar, nota
-      })
-      toast.success(data.message)
-      setDespachoModal(null)
-      setCantidadDespachar('')
-      setNota('')
-      load()
-    } catch (err) { toast.error(err.response?.data?.error || 'Error al despachar') }
+  const cerrarModales = () => {
+    setDespachoModal(null)
+    setRechazarModal(null)
+    setCantidadDespachar('')
+    setNota('')
   }
 
-  const handleRechazar = async () => {
+  const handleDespachar = async (e) => {
+    e.preventDefault()
+    if (!cantidadDespachar || +cantidadDespachar <= 0) return toast.error('Ingresa una cantidad válida')
+    setEnviando(true)
+    try {
+      const { data } = await api.post(`/tickets/${despachoModal.id}/despachar`, { cantidadDespachar: +cantidadDespachar, nota })
+      toast.success(data.message)
+      cerrarModales()
+      load()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'No se pudo despachar')
+      load()
+    } finally { setEnviando(false) }
+  }
+
+  const handleRechazar = async (e) => {
+    e.preventDefault()
+    setEnviando(true)
     try {
       await api.post(`/tickets/${rechazarModal.id}/rechazar`, { nota })
       toast.success('Ticket rechazado')
-      setRechazarModal(null)
-      setNota('')
+      cerrarModales()
       load()
-    } catch (err) { toast.error(err.response?.data?.error || 'Error') }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'No se pudo rechazar')
+    } finally { setEnviando(false) }
   }
 
-  const pendingCount = tickets.filter(t => ['PENDIENTE','PARCIAL'].includes(t.status)).length
+  const pendingCount = tickets.filter(t => ['PENDIENTE', 'PARCIAL'].includes(t.status)).length
+  const pendienteModal = despachoModal ? despachoModal.cantidad - (despachoModal.cantidadDespachada || 0) : 0
+  const stockModal = despachoModal?.herramienta?.stockDisp || 0
+  const unidadModal = despachoModal?.herramienta?.unidad
+  const quedarian = pendienteModal - +cantidadDespachar
 
   return (
     <div className="page-padding">
-      <div className="mb-6">
-        <div className="display text-3xl" style={{color:'var(--text)'}}>TICKETS DE SOLICITUD</div>
-        <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>
-          {pendingCount > 0 ? `${pendingCount} TICKET(S) REQUIEREN ATENCIÓN` : 'GESTIÓN DE SOLICITUDES'}
-        </div>
-      </div>
+      <PageHeader titulo="Tickets" subtitulo={pendingCount > 0 ? `${pendingCount} ${pendingCount === 1 ? 'requiere' : 'requieren'} tu atención` : 'Solicitudes de material'} />
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-1 mb-5 p-1 w-fit max-w-full rounded-lg" style={{background:'var(--surface)', border:'1px solid var(--border)'}}>
-        {['PENDIENTE','PARCIAL','DESPACHADO','RECHAZADO','TODOS'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className="mono px-4 py-2 text-xs transition-all"
-            style={{
-              background: filter === f ? (statusColor[f] || '#f5a623') : 'transparent',
-              color: filter === f ? '#000' : 'var(--muted)',
-              fontWeight: filter === f ? '700' : '400',
-              letterSpacing: '0.08em'
-            }}
-          >{f}</button>
-        ))}
+      <div className="mb-4">
+        <Segmentos opciones={FILTROS} valor={filter} onCambio={setFilter} />
       </div>
 
       <div className="space-y-3">
-        {loading ? <div className="mono text-xs" style={{color:'var(--muted)'}}>CARGANDO...</div>
-        : tickets.length === 0 ? (
-          <div className="card p-8 text-center">
-            <div className="mono text-xs" style={{color:'var(--muted)'}}>NO HAY TICKETS {filter !== 'TODOS' ? `CON STATUS "${filter}"` : ''}</div>
-          </div>
-        ) : tickets.map(t => {
-          const pendiente = t.cantidad - (t.cantidadDespachada || 0)
-          const stockDisp = t.herramienta?.stockDisp || 0
-          const puedeDespachar = ['PENDIENTE','PARCIAL'].includes(t.status)
-          const puedePrint = ['DESPACHADO','PARCIAL'].includes(t.status)
-
-          return (
-            <div key={t.id} className="card p-5" style={{borderLeft:`2px solid ${statusColor[t.status]}`, background: statusBg[t.status]}}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="mono text-xs font-bold" style={{color:'#f5a623'}}>{t.folio}</span>
-                    <span className="mono text-xs font-bold px-2 py-0.5"
-                      style={{background: statusColor[t.status]+'20', color: statusColor[t.status], border:`1px solid ${statusColor[t.status]}40`}}>
-                      {t.status}
-                    </span>
-                    <span className="mono text-xs" style={{color:'var(--muted)'}}>
-                      {new Date(t.createdAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 mb-3">
-                    <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>MATERIAL</div>
-                      <div className="text-sm font-medium" style={{color:'var(--text)'}}>{t.herramienta?.nombre}</div>
-                      <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.herramienta?.codigo}</div>
-                    </div>
-                    <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>CANTIDAD</div>
-                      <div className="display text-2xl" style={{color:'#f5a623'}}>{t.cantidad}</div>
-                      <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.herramienta?.unidad} solicitadas</div>
-                    </div>
-                    <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>PROGRESO</div>
-                      <div className="display text-2xl" style={{color: statusColor[t.status]}}>
-                        {t.cantidadDespachada || 0}/{t.cantidad}
-                      </div>
-                      <div className="mono text-xs" style={{color:'var(--muted)'}}>
-                        {pendiente > 0 ? `${pendiente} pendiente(s)` : 'completo'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {t.cantidadDespachada > 0 && (
-                    <div className="mb-3">
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
-                        <div className="h-full rounded-full transition-all"
-                          style={{width:`${(t.cantidadDespachada/t.cantidad)*100}%`, background: statusColor[t.status]}} />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4 mb-2">
-                    <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>SOLICITANTE</div>
-                      <div className="text-sm" style={{color:'var(--text)'}}>{t.user?.nombre}</div>
-                      <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.user?.empleado} · {t.user?.role}</div>
-                    </div>
-                    <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>MOTIVO / OPERADOR</div>
-                      <div className="text-xs" style={{color:'var(--text-2)'}}>
-                        {t.motivo.includes('| Operador:') ? t.motivo.split('| Operador:')[0].trim() : t.motivo}
-                      </div>
-                      {t.motivo.includes('| Operador:') && (
-                        <div className="mono text-xs mt-0.5" style={{color:'#f5a623'}}>
-                          👷 {t.motivo.split('| Operador:')[1].trim()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {puedeDespachar && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="mono text-xs px-2 py-1"
-                        style={{background:'var(--surface2)', color: stockDisp > 0 ? '#2ecc71' : '#e74c3c', border:`1px solid ${stockDisp > 0 ? '#2ecc7130' : '#e74c3c30'}`}}>
-                        STOCK ACTUAL: {stockDisp} {t.herramienta?.unidad}
-                      </div>
-                      {stockDisp === 0 && (
-                        <div className="flex items-center gap-1 mono text-xs" style={{color:'#e74c3c'}}>
-                          <AlertTriangle size={11} /> SIN STOCK
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {t.nota && (
-                    <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'var(--bg)'}}>
-                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)'}}>NOTA:</div>
-                      <div className="text-xs" style={{color:'var(--text-2)'}}>{t.nota}</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Acciones */}
-                <div className="flex flex-col gap-2 min-w-fit">
-                  {puedeDespachar && (
-                    <>
-                      <button
-                        onClick={() => { setDespachoModal(t); setCantidadDespachar(String(Math.min(pendiente, stockDisp))) }}
-                        disabled={stockDisp === 0}
-                        className="flex items-center gap-2 px-4 py-2.5 mono text-xs font-bold"
-                        style={{
-                          background: stockDisp > 0 ? '#2ecc7120' : 'var(--border)',
-                          color: stockDisp > 0 ? '#2ecc71' : 'var(--muted)',
-                          border: `1px solid ${stockDisp > 0 ? '#2ecc7140' : 'var(--border)'}`,
-                          cursor: stockDisp === 0 ? 'not-allowed' : 'pointer'
-                        }}>
-                        <CheckCircle size={13} /> DESPACHAR
-                      </button>
-                      <button onClick={() => { setRechazarModal(t); setNota('') }}
-                        className="flex items-center gap-2 px-4 py-2.5 mono text-xs font-bold"
-                        style={{background:'#e74c3c20', color:'#e74c3c', border:'1px solid #e74c3c40'}}>
-                        <XCircle size={13} /> RECHAZAR
-                      </button>
-                    </>
-                  )}
-                  {puedePrint && (
-                    <button onClick={() => setPrintTicket(t)}
-                      className="flex items-center gap-2 px-4 py-2.5 mono text-xs font-bold"
-                      style={{background:'#f5a62320', color:'#f5a623', border:'1px solid #f5a62340'}}>
-                      <Printer size={13} /> IMPRIMIR
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {loading ? <p className="text-sm" style={{ color: 'var(--muted)' }}>Cargando tickets...</p>
+        : fallo ? (
+          <EstadoVacio icono={CloudOff} titulo="No se pudieron cargar los tickets" detalle="Revisa tu conexión e intenta de nuevo." accion="Reintentar" onAccion={load} />
+        ) : tickets.length === 0 ? (
+          <EstadoVacio icono={Ticket} titulo={filter === 'PENDIENTE' ? 'No hay tickets pendientes' : 'No hay tickets en esta vista'} detalle="Las solicitudes nuevas aparecerán aquí." />
+        ) : tickets.map(t => (
+          <TarjetaTicket key={t.id} t={t}
+            onDespachar={() => { setDespachoModal(t); setCantidadDespachar(String(Math.min(t.cantidad - (t.cantidadDespachada || 0), t.herramienta?.stockDisp || 0))) }}
+            onRechazar={() => { setRechazarModal(t); setNota('') }}
+            onImprimir={() => setPrintTicket(t)} />
+        ))}
       </div>
 
-      {/* Modal despacho */}
       {despachoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.92)'}}>
-          <div className="w-full max-w-sm card p-6">
-            <div className="mb-4">
-              <div className="display text-xl mb-1" style={{color:'#2ecc71'}}>DESPACHAR MATERIAL</div>
-              <div className="mono text-xs" style={{color:'var(--muted)'}}>{despachoModal.folio} — {despachoModal.herramienta?.nombre}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {[
-                ['SOLICITADO', despachoModal.cantidad - (despachoModal.cantidadDespachada||0), '#f5a623'],
-                ['EN STOCK', despachoModal.herramienta?.stockDisp, '#2ecc71'],
-                ['YA DADO', despachoModal.cantidadDespachada||0, '#3b82f6'],
-              ].map(([label, val, color]) => (
-                <div key={label} className="p-3 text-center" style={{background:'var(--surface2)', border:'1px solid var(--border)'}}>
-                  <div className="mono text-xs mb-1" style={{color:'var(--muted)', fontSize:'12px'}}>{label}</div>
-                  <div className="display text-2xl" style={{color}}>{val}</div>
-                  <div className="mono text-xs" style={{color:'var(--muted)'}}>{despachoModal.herramienta?.unidad}</div>
+        <Modal titulo="Despachar material" subtitulo={`${despachoModal.folio} · ${despachoModal.herramienta?.nombre}`} onCerrar={cerrarModales}>
+          <form onSubmit={handleDespachar} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {[['Faltan por entregar', pendienteModal], ['En stock', stockModal]].map(([etiqueta, valor]) => (
+                <div key={etiqueta} className="stat-card">
+                  <div className="text-sm" style={{ color: 'var(--text-2)' }}>{etiqueta}</div>
+                  <div className="text-2xl font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{valor} <span className="text-sm font-normal" style={{ color: 'var(--muted)' }}>{unidadModal}</span></div>
                 </div>
               ))}
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>CANTIDAD A DESPACHAR</label>
-                <input type="number" min="1"
-                  max={Math.min(despachoModal.cantidad-(despachoModal.cantidadDespachada||0), despachoModal.herramienta?.stockDisp||0)}
-                  className="input-field mono text-lg" value={cantidadDespachar}
-                  onChange={e => setCantidadDespachar(e.target.value)} />
-                {+cantidadDespachar < (despachoModal.cantidad-(despachoModal.cantidadDespachada||0)) && cantidadDespachar !== '' && (
-                  <div className="mono text-xs mt-1" style={{color:'#3b82f6'}}>
-                    ⚠ Parcial — quedarán {(despachoModal.cantidad-(despachoModal.cantidadDespachada||0)) - +cantidadDespachar} pendiente(s)
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>NOTA (opcional)</label>
-                <input className="input-field" value={nota} onChange={e => setNota(e.target.value)}
-                  placeholder="Ej: Resto disponible el lunes..." />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button onClick={() => { setDespachoModal(null); setCantidadDespachar(''); setNota('') }}
-                  className="btn-ghost flex-1 justify-center mono text-xs">CANCELAR</button>
-                <button onClick={handleDespachar}
-                  className="flex-1 justify-center display tracking-widest py-2 px-4 text-sm font-bold"
-                  style={{background:'#2ecc71', color:'#000'}}>CONFIRMAR</button>
-              </div>
+            <Campo etiqueta="Cantidad a despachar" ayuda={cantidadDespachar !== '' && quedarian > 0 ? `Despacho parcial: quedarán ${quedarian} pendientes.` : undefined}>
+              <input type="number" min="1" max={Math.min(pendienteModal, stockModal)} required autoFocus className="input-field mono"
+                value={cantidadDespachar} onChange={e => setCantidadDespachar(e.target.value)} />
+            </Campo>
+            <Campo etiqueta="Nota (opcional)">
+              <input className="input-field" value={nota} onChange={e => setNota(e.target.value)} placeholder="Resto disponible el lunes" />
+            </Campo>
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={cerrarModales} className="btn-ghost flex-1 justify-center">Cancelar</button>
+              <button type="submit" disabled={enviando} className="btn-accent flex-1 justify-center disabled:opacity-60">{enviando ? 'Despachando...' : 'Confirmar despacho'}</button>
             </div>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
-      {/* Modal rechazar */}
       {rechazarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.92)'}}>
-          <div className="w-full max-w-sm card p-6">
-            <div className="mb-4">
-              <div className="display text-xl mb-1" style={{color:'#e74c3c'}}>RECHAZAR TICKET</div>
-              <div className="mono text-xs" style={{color:'var(--muted)'}}>{rechazarModal.folio} — {rechazarModal.herramienta?.nombre}</div>
+        <Modal titulo="Rechazar ticket" subtitulo={`${rechazarModal.folio} · ${rechazarModal.herramienta?.nombre}`} onCerrar={cerrarModales}>
+          <form onSubmit={handleRechazar} className="space-y-4">
+            <Campo etiqueta="Motivo del rechazo">
+              <textarea className="input-field h-24 resize-none" autoFocus value={nota} onChange={e => setNota(e.target.value)} placeholder="Material en mantenimiento" />
+            </Campo>
+            <div className="flex gap-2">
+              <button type="button" onClick={cerrarModales} className="btn-ghost flex-1 justify-center">Cancelar</button>
+              <button type="submit" disabled={enviando} className="btn-danger flex-1 justify-center disabled:opacity-60">{enviando ? 'Rechazando...' : 'Rechazar ticket'}</button>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>MOTIVO DEL RECHAZO</label>
-                <textarea className="input-field h-20 resize-none" value={nota} onChange={e => setNota(e.target.value)}
-                  placeholder="Ej: Sin stock, material en mantenimiento..." />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => { setRechazarModal(null); setNota('') }}
-                  className="btn-ghost flex-1 justify-center mono text-xs">CANCELAR</button>
-                <button onClick={handleRechazar}
-                  className="flex-1 justify-center display tracking-widest py-2 px-4 text-sm font-bold"
-                  style={{background:'#e74c3c', color:'#fff'}}>RECHAZAR</button>
-              </div>
-            </div>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
-      {/* Modal impresión */}
-      {printTicket && (
-        <TicketPrint
-          ticket={printTicket}
-          encargado={user?.nombre}
-          onClose={() => setPrintTicket(null)}
-        />
-      )}
+      {printTicket && <TicketPrint ticket={printTicket} encargado={user?.nombre} onClose={() => setPrintTicket(null)} />}
     </div>
   )
 }

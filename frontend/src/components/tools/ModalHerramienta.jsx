@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
 import api from '../../lib/api'
 import useAuthStore from '../../hooks/useAuth'
 import toast from 'react-hot-toast'
+import { Campo, Modal, Segmentos } from '../ui'
 
 export default function ModalHerramienta({ herramienta, categorias, onClose, onSave }) {
   const user = useAuthStore(s => s.user)
@@ -14,8 +14,8 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
     nombre: herramienta?.nombre || '',
     descripcion: herramienta?.descripcion || '',
     categoriaId: herramienta?.categoriaId || '',
-    stockTotal: herramienta?.stockTotal || '',
-    stockMin: herramienta?.stockMin || 1,
+    stockTotal: herramienta?.stockTotal ?? '',
+    stockMin: herramienta?.stockMin ?? 1,
     ubicacion_texto: herramienta?.ubicacion_texto || '',
     unidad: herramienta?.unidad || 'pza',
   })
@@ -26,23 +26,25 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e.preventDefault()
     setLoading(true)
     try {
       if (isEdit) {
         await api.put(`/herramientas/${herramienta.id}`, form)
-        toast.success('Herramienta actualizada')
+        toast.success('Material actualizado')
       } else {
         await api.post('/herramientas', form)
-        toast.success('Herramienta registrada')
+        toast.success('Material registrado')
       }
       onSave()
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Error al guardar')
+      toast.error(err.response?.data?.error || 'No se pudo guardar')
     } finally { setLoading(false) }
   }
 
-  const handleStockAdj = async () => {
+  const handleStockAdj = async (e) => {
+    e.preventDefault()
     if (!stockAdj.cantidad) return toast.error('Ingresa una cantidad')
     setLoading(true)
     try {
@@ -50,96 +52,74 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
       toast.success('Stock ajustado')
       onSave()
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Error al ajustar')
+      toast.error(err.response?.data?.error || 'No se pudo ajustar el stock')
     } finally { setLoading(false) }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.85)'}}>
-      <div className="w-full max-w-lg card" style={{maxHeight:'85vh', overflowY:'auto'}}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'var(--surface2)'}}>
-          <div>
-            <div className="display text-xl" style={{color:'#f5a623'}}>{isEdit ? herramienta.nombre : 'NUEVA HERRAMIENTA'}</div>
-            {isEdit && <div className="mono text-xs" style={{color:'var(--muted)'}}>{herramienta.codigo}</div>}
-          </div>
-          <button onClick={onClose} className="btn-ghost p-2"><X size={16} /></button>
+    <Modal titulo={isEdit ? herramienta.nombre : 'Nuevo material'} subtitulo={isEdit ? herramienta.codigo : undefined} onCerrar={onClose} ancho="max-w-lg">
+      {isEdit && isAdmin && (
+        <div className="mb-5">
+          <Segmentos valor={tab} onCambio={setTab} opciones={[{ valor: 'info', etiqueta: 'Información' }, { valor: 'stock', etiqueta: 'Ajustar stock' }]} />
         </div>
+      )}
 
-        {/* Tabs (solo en edición) */}
-        {isEdit && (
-          <div className="flex border-b" style={{borderColor:'var(--surface2)'}}>
-            {['info', 'stock'].map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`mono text-xs px-5 py-3 tracking-widest transition-colors ${tab === t ? 'text-[#f5a623] border-b-2 border-[#f5a623]' : 'text-[#444]'}`}
-              >{t.toUpperCase()}</button>
-            ))}
+      {(!isEdit || tab === 'info') && (
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Campo etiqueta="Código"><input className="input-field mono" required value={form.codigo} onChange={e => set('codigo', e.target.value)} placeholder="TC-001" disabled={!isAdmin} /></Campo>
+            <div className="sm:col-span-2">
+              <Campo etiqueta="Nombre"><input className="input-field" required value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Multímetro Fluke 87V" disabled={!isAdmin} /></Campo>
+            </div>
           </div>
-        )}
-
-        <div className="p-5 space-y-4">
-          {(!isEdit || tab === 'info') && (
-            <>
-              <Row label="CÓDIGO"><input className="input-field mono" value={form.codigo} onChange={e => set('codigo', e.target.value)} placeholder="TC-001" disabled={!isAdmin} /></Row>
-              <Row label="NOMBRE"><input className="input-field" value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Multímetro Fluke 87V" disabled={!isAdmin} /></Row>
-              <Row label="DESCRIPCIÓN"><input className="input-field" value={form.descripcion} onChange={e => set('descripcion', e.target.value)} placeholder="Opcional" disabled={!isAdmin} /></Row>
-              <Row label="CATEGORÍA">
-                <select className="input-field" value={form.categoriaId} onChange={e => set('categoriaId', e.target.value)} disabled={!isAdmin}>
-                  <option value="">Seleccionar...</option>
-                  {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
-              </Row>
-              <div className="grid grid-cols-3 gap-3">
-                <Row label="STOCK TOTAL"><input type="number" className="input-field mono" value={form.stockTotal} onChange={e => set('stockTotal', e.target.value)} disabled={!isAdmin || isEdit} /></Row>
-                <Row label="STOCK MÍN."><input type="number" className="input-field mono" value={form.stockMin} onChange={e => set('stockMin', e.target.value)} disabled={!isAdmin} /></Row>
-                <Row label="UNIDAD"><input className="input-field mono" value={form.unidad} onChange={e => set('unidad', e.target.value)} placeholder="pza" disabled={!isAdmin} /></Row>
-              </div>
-              <Row label="UBICACIÓN"><input className="input-field" value={form.ubicacion_texto} onChange={e => set('ubicacion_texto', e.target.value)} placeholder="Estante A-3" disabled={!isAdmin} /></Row>
-              {isAdmin && (
-                <button onClick={handleSave} disabled={loading} className="btn-accent w-full justify-center display tracking-widest mt-2">
-                  {loading ? 'GUARDANDO...' : isEdit ? 'ACTUALIZAR' : 'REGISTRAR'}
-                </button>
-              )}
-            </>
+          <Campo etiqueta="Descripción (opcional)"><input className="input-field" value={form.descripcion} onChange={e => set('descripcion', e.target.value)} disabled={!isAdmin} /></Campo>
+          <Campo etiqueta="Categoría">
+            <select className="input-field" required value={form.categoriaId} onChange={e => set('categoriaId', e.target.value)} disabled={!isAdmin}>
+              <option value="">Selecciona una categoría</option>
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+          </Campo>
+          <div className="grid grid-cols-3 gap-3">
+            <Campo etiqueta="Stock total"><input type="number" min="0" className="input-field mono" value={form.stockTotal} onChange={e => set('stockTotal', e.target.value)} disabled={!isAdmin || isEdit} /></Campo>
+            <Campo etiqueta="Stock mínimo"><input type="number" min="0" className="input-field mono" value={form.stockMin} onChange={e => set('stockMin', e.target.value)} disabled={!isAdmin} /></Campo>
+            <Campo etiqueta="Unidad"><input className="input-field mono" value={form.unidad} onChange={e => set('unidad', e.target.value)} placeholder="pza" disabled={!isAdmin} /></Campo>
+          </div>
+          {isEdit && <p className="text-xs" style={{ color: 'var(--muted)' }}>El stock total se cambia desde Ajustar stock, para que quede registrado en Movimientos.</p>}
+          <Campo etiqueta="Ubicación"><input className="input-field" value={form.ubicacion_texto} onChange={e => set('ubicacion_texto', e.target.value)} placeholder="Estante A-3" disabled={!isAdmin} /></Campo>
+          {isAdmin && (
+            <button type="submit" disabled={loading} className="btn-accent w-full justify-center disabled:opacity-60">
+              {loading ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Registrar material'}
+            </button>
           )}
+        </form>
+      )}
 
-          {isEdit && tab === 'stock' && isAdmin && (
-            <>
-              <div className="flex gap-4 mb-2">
-                <div className="stat-card flex-1 text-center">
-                  <div className="mono text-xs mb-1" style={{color:'var(--muted)'}}>DISPONIBLE</div>
-                  <div className="display text-3xl" style={{color:'#f5a623'}}>{herramienta.stockDisp}</div>
-                </div>
-                <div className="stat-card flex-1 text-center" style={{borderLeftColor:'var(--muted)'}}>
-                  <div className="mono text-xs mb-1" style={{color:'var(--muted)'}}>TOTAL</div>
-                  <div className="display text-3xl" style={{color:'var(--text-2)'}}>{herramienta.stockTotal}</div>
-                </div>
-              </div>
-              <Row label="TIPO DE MOVIMIENTO">
-                <select className="input-field" value={stockAdj.tipo} onChange={e => setStockAdj(a => ({...a, tipo: e.target.value}))}>
-                  <option value="ENTRADA">ENTRADA (agregar)</option>
-                  <option value="AJUSTE">AJUSTE (quitar)</option>
-                  <option value="BAJA">BAJA (quitar permanente)</option>
-                </select>
-              </Row>
-              <Row label="CANTIDAD"><input type="number" className="input-field mono" value={stockAdj.cantidad} onChange={e => setStockAdj(a => ({...a, cantidad: e.target.value}))} placeholder="0" min={1} /></Row>
-              <Row label="NOTA"><input className="input-field" value={stockAdj.nota} onChange={e => setStockAdj(a => ({...a, nota: e.target.value}))} placeholder="Motivo del ajuste..." /></Row>
-              <button onClick={handleStockAdj} disabled={loading} className="btn-accent w-full justify-center display tracking-widest">
-                {loading ? 'APLICANDO...' : 'APLICAR MOVIMIENTO'}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Row({ label, children }) {
-  return (
-    <div>
-      <label className="mono text-xs tracking-widest mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>{label}</label>
-      {children}
-    </div>
+      {isEdit && tab === 'stock' && isAdmin && (
+        <form onSubmit={handleStockAdj} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="stat-card">
+              <div className="text-sm" style={{ color: 'var(--text-2)' }}>Disponible</div>
+              <div className="text-2xl font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{herramienta.stockDisp}</div>
+            </div>
+            <div className="stat-card">
+              <div className="text-sm" style={{ color: 'var(--text-2)' }}>Total</div>
+              <div className="text-2xl font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{herramienta.stockTotal}</div>
+            </div>
+          </div>
+          <Campo etiqueta="Tipo de movimiento">
+            <select className="input-field" value={stockAdj.tipo} onChange={e => setStockAdj(a => ({ ...a, tipo: e.target.value }))}>
+              <option value="ENTRADA">Entrada (agregar)</option>
+              <option value="AJUSTE">Ajuste (quitar)</option>
+              <option value="BAJA">Baja (quitar permanente)</option>
+            </select>
+          </Campo>
+          <Campo etiqueta="Cantidad"><input type="number" min="1" required className="input-field mono" value={stockAdj.cantidad} onChange={e => setStockAdj(a => ({ ...a, cantidad: e.target.value }))} /></Campo>
+          <Campo etiqueta="Nota"><input className="input-field" value={stockAdj.nota} onChange={e => setStockAdj(a => ({ ...a, nota: e.target.value }))} placeholder="Motivo del ajuste" /></Campo>
+          <button type="submit" disabled={loading} className="btn-accent w-full justify-center disabled:opacity-60">
+            {loading ? 'Aplicando...' : 'Aplicar movimiento'}
+          </button>
+        </form>
+      )}
+    </Modal>
   )
 }
