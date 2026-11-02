@@ -37,11 +37,11 @@ export default function UbicacionesPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>UBICACIONES</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>ESTANTES, CAJONES Y ZONAS DEL ALMACÉN</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>UBICACIONES</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>ESTANTES, CAJONES Y ZONAS DEL ALMACÉN</div>
         </div>
         {isAdmin && (
           <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
@@ -53,7 +53,7 @@ export default function UbicacionesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {ubicaciones.length === 0 && (
           <div className="card p-6 col-span-3 text-center">
-            <div className="mono text-xs" style={{color:'#333'}}>SIN UBICACIONES REGISTRADAS</div>
+            <div className="mono text-xs" style={{color:'var(--muted)'}}>SIN UBICACIONES REGISTRADAS</div>
           </div>
         )}
         {ubicaciones.map(u => (
@@ -69,9 +69,9 @@ export default function UbicacionesPage() {
                 </button>
               )}
             </div>
-            {u.zona && <div className="mono text-xs mb-1" style={{color:'#555'}}>📍 {u.zona}</div>}
-            {u.descripcion && <div className="text-xs mb-3" style={{color:'#444'}}>{u.descripcion}</div>}
-            <div className="mono text-xs pt-3 border-t" style={{color:'#555', borderColor:'#1a1a1a'}}>
+            {u.zona && <div className="mono text-xs mb-1" style={{color:'var(--muted)'}}>📍 {u.zona}</div>}
+            {u.descripcion && <div className="text-xs mb-3" style={{color:'var(--muted)'}}>{u.descripcion}</div>}
+            <div className="mono text-xs pt-3 border-t" style={{color:'var(--muted)', borderColor:'var(--surface2)'}}>
               {u._count?.herramientas || 0} {u._count?.herramientas === 1 ? 'material asignado' : 'materiales asignados'}
             </div>
           </div>
@@ -87,15 +87,15 @@ export default function UbicacionesPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>NOMBRE *</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>NOMBRE *</label>
                 <input className="input-field" value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Ej: Estante A, Cajón 3..." />
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>ZONA</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>ZONA</label>
                 <input className="input-field" value={form.zona} onChange={e => set('zona', e.target.value)} placeholder="Ej: Zona 1, Área de herramientas..." />
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>DESCRIPCIÓN</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>DESCRIPCIÓN</label>
                 <input className="input-field" value={form.descripcion} onChange={e => set('descripcion', e.target.value)} placeholder="¿Qué se guarda aquí?" />
               </div>
               <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest">CREAR</button>

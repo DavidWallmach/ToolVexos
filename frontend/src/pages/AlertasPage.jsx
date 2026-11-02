@@ -25,18 +25,18 @@ export default function AlertasPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="mb-8">
-        <div className="display text-3xl" style={{color:'#e8e8e8'}}>ALERTAS DE STOCK</div>
-        <div className="mono text-xs mt-0.5" style={{color:'#444'}}>MATERIALES QUE REQUIEREN ATENCIÓN</div>
+        <div className="display text-3xl" style={{color:'var(--text)'}}>ALERTAS DE STOCK</div>
+        <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>MATERIALES QUE REQUIEREN ATENCIÓN</div>
       </div>
 
-      {loading ? <div className="mono text-xs" style={{color:'#444'}}>CARGANDO...</div> : (
+      {loading ? <div className="mono text-xs" style={{color:'var(--muted)'}}>CARGANDO...</div> : (
         <>
           {agotados.length === 0 && stockBajo.length === 0 && enMant.length === 0 && (
             <div className="card p-8 text-center">
               <div className="display text-2xl mb-2" style={{color:'#2ecc71'}}>TODO EN ORDEN</div>
-              <div className="mono text-xs" style={{color:'#444'}}>No hay alertas activas en este momento</div>
+              <div className="mono text-xs" style={{color:'var(--muted)'}}>No hay alertas activas en este momento</div>
             </div>
           )}
 
@@ -92,19 +92,19 @@ export default function AlertasPage() {
 
 function AlertCard({ h, color, bg, badge, label, sublabel, onComprar }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 border-l-2" style={{background: bg, borderColor: color, borderTop:'1px solid',borderRight:'1px solid',borderBottom:'1px solid', borderTopColor:'#1a1a1a', borderRightColor:'#1a1a1a', borderBottomColor:'#1a1a1a'}}>
+    <div className="flex items-center justify-between px-5 py-4 border-l-2" style={{background: bg, borderColor: color, borderTop:'1px solid',borderRight:'1px solid',borderBottom:'1px solid', borderTopColor:'var(--surface2)', borderRightColor:'var(--surface2)', borderBottomColor:'var(--surface2)'}}>
       <div className="flex items-center gap-4">
         <AlertTriangle size={16} style={{color}} />
         <div>
-          <div className="text-sm font-medium" style={{color:'#e8e8e8'}}>{h.nombre}</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#555'}}>{h.codigo} · {h.categoria?.nombre} · {h.ubicacion_texto || '—'}</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>{sublabel}</div>
+          <div className="text-sm font-medium" style={{color:'var(--text)'}}>{h.nombre}</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>{h.codigo} · {h.categoria?.nombre} · {h.ubicacion_texto || '—'}</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>{sublabel}</div>
         </div>
       </div>
       <div className="flex items-center gap-4">
         <div className="text-right">
           <div className="mono text-lg font-bold" style={{color}}>{label}</div>
-          <div className="mono text-xs" style={{color:'#444', fontSize:'9px'}}>{badge}</div>
+          <div className="mono text-xs" style={{color:'var(--muted)', fontSize:'12px'}}>{badge}</div>
         </div>
         {onComprar && (
           <button onClick={() => onComprar(h)} className="btn-danger text-xs py-1.5 px-3">

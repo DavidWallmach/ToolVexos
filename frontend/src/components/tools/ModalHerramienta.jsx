@@ -58,17 +58,17 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.85)'}}>
       <div className="w-full max-w-lg card" style={{maxHeight:'85vh', overflowY:'auto'}}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'#1a1a1a'}}>
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'var(--surface2)'}}>
           <div>
             <div className="display text-xl" style={{color:'#f5a623'}}>{isEdit ? herramienta.nombre : 'NUEVA HERRAMIENTA'}</div>
-            {isEdit && <div className="mono text-xs" style={{color:'#444'}}>{herramienta.codigo}</div>}
+            {isEdit && <div className="mono text-xs" style={{color:'var(--muted)'}}>{herramienta.codigo}</div>}
           </div>
           <button onClick={onClose} className="btn-ghost p-2"><X size={16} /></button>
         </div>
 
         {/* Tabs (solo en edición) */}
         {isEdit && (
-          <div className="flex border-b" style={{borderColor:'#1a1a1a'}}>
+          <div className="flex border-b" style={{borderColor:'var(--surface2)'}}>
             {['info', 'stock'].map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className={`mono text-xs px-5 py-3 tracking-widest transition-colors ${tab === t ? 'text-[#f5a623] border-b-2 border-[#f5a623]' : 'text-[#444]'}`}
@@ -107,12 +107,12 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
             <>
               <div className="flex gap-4 mb-2">
                 <div className="stat-card flex-1 text-center">
-                  <div className="mono text-xs mb-1" style={{color:'#555'}}>DISPONIBLE</div>
+                  <div className="mono text-xs mb-1" style={{color:'var(--muted)'}}>DISPONIBLE</div>
                   <div className="display text-3xl" style={{color:'#f5a623'}}>{herramienta.stockDisp}</div>
                 </div>
-                <div className="stat-card flex-1 text-center" style={{borderLeftColor:'#555'}}>
-                  <div className="mono text-xs mb-1" style={{color:'#555'}}>TOTAL</div>
-                  <div className="display text-3xl" style={{color:'#888'}}>{herramienta.stockTotal}</div>
+                <div className="stat-card flex-1 text-center" style={{borderLeftColor:'var(--muted)'}}>
+                  <div className="mono text-xs mb-1" style={{color:'var(--muted)'}}>TOTAL</div>
+                  <div className="display text-3xl" style={{color:'var(--text-2)'}}>{herramienta.stockTotal}</div>
                 </div>
               </div>
               <Row label="TIPO DE MOVIMIENTO">
@@ -138,7 +138,7 @@ export default function ModalHerramienta({ herramienta, categorias, onClose, onS
 function Row({ label, children }) {
   return (
     <div>
-      <label className="mono text-xs tracking-widest mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>{label}</label>
+      <label className="mono text-xs tracking-widest mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>{label}</label>
       {children}
     </div>
   )

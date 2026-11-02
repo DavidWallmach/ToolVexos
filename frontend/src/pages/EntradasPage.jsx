@@ -37,11 +37,11 @@ export default function EntradasPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>ENTRADAS</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>REGISTRO DE MATERIAL INGRESADO AL ALMACÉN</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>ENTRADAS</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>REGISTRO DE MATERIAL INGRESADO AL ALMACÉN</div>
         </div>
         {isAdmin && (
           <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
@@ -56,24 +56,24 @@ export default function EntradasPage() {
             <tr>{['FECHA / HORA','MATERIAL','CANTIDAD','PROVEEDOR','RECIBIÓ','NOTAS'].map(h=><th key={h} className="th">{h}</th>)}</tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'#333'}}>CARGANDO...</td></tr>
-            : entradas.length === 0 ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'#333'}}>SIN ENTRADAS REGISTRADAS</td></tr>
+            {loading ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>CARGANDO...</td></tr>
+            : entradas.length === 0 ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN ENTRADAS REGISTRADAS</td></tr>
             : entradas.map(e => (
               <tr key={e.id} className="table-row">
-                <td className="td mono text-xs" style={{color:'#555'}}>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>
                   {new Date(e.createdAt).toLocaleDateString('es-MX')} {new Date(e.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
                 </td>
                 <td className="td">
-                  <div className="text-sm" style={{color:'#e8e8e8'}}>{e.herramienta?.nombre}</div>
-                  <div className="mono text-xs" style={{color:'#444'}}>{e.herramienta?.codigo}</div>
+                  <div className="text-sm" style={{color:'var(--text)'}}>{e.herramienta?.nombre}</div>
+                  <div className="mono text-xs" style={{color:'var(--muted)'}}>{e.herramienta?.codigo}</div>
                 </td>
                 <td className="td">
                   <span className="mono text-sm font-semibold" style={{color:'#2ecc71'}}>+{e.cantidad}</span>
-                  <span className="mono text-xs ml-1" style={{color:'#444'}}>{e.herramienta?.unidad}</span>
+                  <span className="mono text-xs ml-1" style={{color:'var(--muted)'}}>{e.herramienta?.unidad}</span>
                 </td>
-                <td className="td mono text-xs" style={{color:'#888'}}>{e.proveedor || '—'}</td>
-                <td className="td mono text-xs" style={{color:'#888'}}>{e.recibio || '—'}</td>
-                <td className="td text-xs" style={{color:'#555'}}>{e.notas || '—'}</td>
+                <td className="td mono text-xs" style={{color:'var(--text-2)'}}>{e.proveedor || '—'}</td>
+                <td className="td mono text-xs" style={{color:'var(--text-2)'}}>{e.recibio || '—'}</td>
+                <td className="td text-xs" style={{color:'var(--muted)'}}>{e.notas || '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -86,13 +86,13 @@ export default function EntradasPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <div className="display text-xl" style={{color:'#2ecc71'}}>REGISTRAR ENTRADA</div>
-                <div className="mono text-xs" style={{color:'#444'}}>INGRESO DE MATERIAL AL ALMACÉN</div>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>INGRESO DE MATERIAL AL ALMACÉN</div>
               </div>
               <button onClick={() => setModal(false)} className="btn-ghost p-2 text-xs">✕</button>
             </div>
             <div className="space-y-4">
               <div>
-  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MATERIAL *</label>
+  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>MATERIAL *</label>
   <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
     <option value="">Seleccionar...</option>
     {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Stock: {h.stockDisp}</option>)}
@@ -108,20 +108,20 @@ export default function EntradasPage() {
 </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>CANTIDAD *</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>CANTIDAD *</label>
                   <input type="number" min="1" className="input-field mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} placeholder="0" />
                 </div>
                 <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>PROVEEDOR</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>PROVEEDOR</label>
                   <input className="input-field" value={form.proveedor} onChange={e => set('proveedor', e.target.value)} placeholder="Ej: HISCO" />
                 </div>
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>RECIBIÓ</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>RECIBIÓ</label>
                 <input className="input-field" value={form.recibio} onChange={e => set('recibio', e.target.value)} placeholder="Nombre de quien recibió" />
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>NOTAS</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>NOTAS</label>
                 <input className="input-field" value={form.notas} onChange={e => set('notas', e.target.value)} placeholder="Observaciones opcionales..." />
               </div>
               <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest" style={{background:'#2ecc71', color:'#000'}}>

@@ -50,11 +50,11 @@ export default function SalidasPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>SALIDAS</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>REGISTRO DE MATERIAL ENTREGADO A PRODUCCIÓN</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>SALIDAS</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>REGISTRO DE MATERIAL ENTREGADO A PRODUCCIÓN</div>
         </div>
         {canCreate && (
           <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
@@ -69,24 +69,24 @@ export default function SalidasPage() {
             <tr>{['FECHA / HORA','MATERIAL','CANTIDAD','SOLICITÓ','DEPARTAMENTO','PROPÓSITO'].map(h=><th key={h} className="th">{h}</th>)}</tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'#333'}}>CARGANDO...</td></tr>
-            : salidas.length === 0 ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'#333'}}>SIN SALIDAS REGISTRADAS</td></tr>
+            {loading ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>CARGANDO...</td></tr>
+            : salidas.length === 0 ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN SALIDAS REGISTRADAS</td></tr>
             : salidas.map(s => (
               <tr key={s.id} className="table-row">
-                <td className="td mono text-xs" style={{color:'#555'}}>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>
                   {new Date(s.createdAt).toLocaleDateString('es-MX')} {new Date(s.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
                 </td>
                 <td className="td">
-                  <div className="text-sm" style={{color:'#e8e8e8'}}>{s.herramienta?.nombre}</div>
-                  <div className="mono text-xs" style={{color:'#444'}}>{s.herramienta?.codigo}</div>
+                  <div className="text-sm" style={{color:'var(--text)'}}>{s.herramienta?.nombre}</div>
+                  <div className="mono text-xs" style={{color:'var(--muted)'}}>{s.herramienta?.codigo}</div>
                 </td>
                 <td className="td">
                   <span className="mono text-sm font-semibold" style={{color:'#f5a623'}}>-{s.cantidad}</span>
-                  <span className="mono text-xs ml-1" style={{color:'#444'}}>{s.herramienta?.unidad}</span>
+                  <span className="mono text-xs ml-1" style={{color:'var(--muted)'}}>{s.herramienta?.unidad}</span>
                 </td>
-                <td className="td text-sm" style={{color:'#e8e8e8'}}>{s.solicitante}</td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{s.departamento || '—'}</td>
-                <td className="td text-xs" style={{color:'#555'}}>{s.proposito || '—'}</td>
+                <td className="td text-sm" style={{color:'var(--text)'}}>{s.solicitante}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{s.departamento || '—'}</td>
+                <td className="td text-xs" style={{color:'var(--muted)'}}>{s.proposito || '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -99,20 +99,20 @@ export default function SalidasPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <div className="display text-xl" style={{color:'#f5a623'}}>REGISTRAR SALIDA</div>
-                <div className="mono text-xs" style={{color:'#444'}}>ENTREGA DE MATERIAL A PRODUCCIÓN</div>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>ENTREGA DE MATERIAL A PRODUCCIÓN</div>
               </div>
               <button onClick={() => setModal(false)} className="btn-ghost p-2 text-xs">✕</button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MATERIAL *</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>MATERIAL *</label>
                 <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
                   <option value="">Seleccionar...</option>
                   {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Disp: {h.stockDisp} {h.unidad}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>PERSONA REGISTRADA (opcional)</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>PERSONA REGISTRADA (opcional)</label>
                 <select className="input-field" onChange={handlePersonaSelect}>
                   <option value="">Seleccionar persona...</option>
                   {personas.map(p => <option key={p.id} value={p.id}>{p.nombre} — {p.empleado}</option>)}
@@ -120,20 +120,20 @@ export default function SalidasPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>SOLICITANTE *</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>SOLICITANTE *</label>
                   <input className="input-field" value={form.solicitante} onChange={e => set('solicitante', e.target.value)} placeholder="Nombre completo" />
                 </div>
                 <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>CANTIDAD *</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>CANTIDAD *</label>
                   <input type="number" min="1" className="input-field mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} placeholder="0" />
                 </div>
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>DEPARTAMENTO</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>DEPARTAMENTO</label>
                 <input className="input-field" value={form.departamento} onChange={e => set('departamento', e.target.value)} placeholder="Ej: Producción, Mantenimiento..." />
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>PROPÓSITO</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>PROPÓSITO</label>
                 <input className="input-field" value={form.proposito} onChange={e => set('proposito', e.target.value)} placeholder="¿Para qué se usa?" />
               </div>
               <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest">

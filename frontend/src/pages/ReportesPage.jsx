@@ -288,24 +288,24 @@ function DateFilter({ desde, hasta, onDesde, onHasta, shortcuts }) {
       <div className="flex gap-1 flex-wrap">
         <button onClick={() => { onDesde(''); onHasta('') }}
           className="mono text-xs px-2 py-1 transition-colors"
-          style={{background: !desde ? '#f5a62320' : '#1a1a1a', color: !desde ? '#f5a623' : '#444', border:`1px solid ${!desde ? '#f5a62340' : '#2a2a2a'}`}}>
+          style={{background: !desde ? '#f5a62320' : 'var(--surface2)', color: !desde ? '#f5a623' : 'var(--muted)', border:`1px solid ${!desde ? '#f5a62340' : 'var(--border)'}`}}>
           TODO
         </button>
         {[['HOY', 0],['7 DÍAS', 7],['15 DÍAS', 15],['30 DÍAS', 30],['90 DÍAS', 90]].map(([label, dias]) => (
           <button key={label} onClick={() => setRango(dias)}
             className="mono text-xs px-2 py-1 transition-colors"
-            style={{background:'#1a1a1a', color:'#555', border:'1px solid #2a2a2a'}}>
+            style={{background:'var(--surface2)', color:'var(--muted)', border:'1px solid #2a2a2a'}}>
             {label}
           </button>
         ))}
       </div>
       {/* Fechas personalizadas */}
       <div className="flex gap-2 items-center">
-        <Calendar size={12} style={{color:'#444'}} />
-        <input type="date" className="input-field mono py-1" style={{width:'140px', fontSize:'11px'}}
+        <Calendar size={12} style={{color:'var(--muted)'}} />
+        <input type="date" className="input-field mono py-1" style={{width:'140px', fontSize:'12px'}}
           value={desde} onChange={e => onDesde(e.target.value)} />
-        <span className="mono text-xs" style={{color:'#444'}}>→</span>
-        <input type="date" className="input-field mono py-1" style={{width:'140px', fontSize:'11px'}}
+        <span className="mono text-xs" style={{color:'var(--muted)'}}>→</span>
+        <input type="date" className="input-field mono py-1" style={{width:'140px', fontSize:'12px'}}
           value={hasta} onChange={e => onHasta(e.target.value)} />
         {desde && (
           <span className="mono text-xs" style={{color:'#f5a623'}}>
@@ -340,10 +340,10 @@ export default function ReportesPage() {
   const statusOptions = ['TODOS','PENDIENTE','PARCIAL','DESPACHADO','RECHAZADO']
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="mb-8">
-        <div className="display text-3xl" style={{color:'#e8e8e8'}}>REPORTES</div>
-        <div className="mono text-xs mt-0.5" style={{color:'#444'}}>EXPORTAR DATOS EN EXCEL Y PDF CON FILTROS DE FECHA</div>
+        <div className="display text-3xl" style={{color:'var(--text)'}}>REPORTES</div>
+        <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>EXPORTAR DATOS EN EXCEL Y PDF CON FILTROS DE FECHA</div>
       </div>
 
       <div className="space-y-4">
@@ -363,7 +363,7 @@ export default function ReportesPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="display text-lg mb-0.5" style={{color:'#3b82f6'}}>MOVIMIENTOS</div>
-              <div className="mono text-xs" style={{color:'#555'}}>Entradas, salidas y ajustes de stock</div>
+              <div className="mono text-xs" style={{color:'var(--muted)'}}>Entradas, salidas y ajustes de stock</div>
               <DateFilter desde={movDesde} hasta={movHasta} onDesde={setMovDesde} onHasta={setMovHasta} />
             </div>
             <BtnsExportPDF
@@ -379,7 +379,7 @@ export default function ReportesPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="display text-lg mb-0.5" style={{color:'#f5a623'}}>TICKETS DE SOLICITUD</div>
-              <div className="mono text-xs" style={{color:'#555'}}>Solicitudes de material por supervisores y jefes</div>
+              <div className="mono text-xs" style={{color:'var(--muted)'}}>Solicitudes de material por supervisores y jefes</div>
               <DateFilter desde={tkDesde} hasta={tkHasta} onDesde={setTkDesde} onHasta={setTkHasta} />
               {/* Filtro de status */}
               <div className="flex gap-1 mt-2 flex-wrap">
@@ -387,9 +387,9 @@ export default function ReportesPage() {
                   <button key={s} onClick={() => setTkStatus(s)}
                     className="mono text-xs px-2 py-1 transition-colors"
                     style={{
-                      background: tkStatus === s ? '#f5a62320' : '#1a1a1a',
-                      color: tkStatus === s ? '#f5a623' : '#444',
-                      border: `1px solid ${tkStatus === s ? '#f5a62340' : '#2a2a2a'}`
+                      background: tkStatus === s ? '#f5a62320' : 'var(--surface2)',
+                      color: tkStatus === s ? '#f5a623' : 'var(--muted)',
+                      border: `1px solid ${tkStatus === s ? '#f5a62340' : 'var(--border)'}`
                     }}>{s}</button>
                 ))}
               </div>
@@ -407,7 +407,7 @@ export default function ReportesPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="display text-lg mb-0.5" style={{color:'#2ecc71'}}>SALIDAS POR PERSONA</div>
-              <div className="mono text-xs" style={{color:'#555'}}>Material entregado agrupado por solicitante</div>
+              <div className="mono text-xs" style={{color:'var(--muted)'}}>Material entregado agrupado por solicitante</div>
               <DateFilter desde={salDesde} hasta={salHasta} onDesde={setSalDesde} onHasta={setSalHasta} />
             </div>
             <BtnsExportPDF
@@ -429,8 +429,8 @@ export default function ReportesPage() {
         />
       </div>
 
-      <div className="mt-6 px-4 py-3 border" style={{borderColor:'#2a2a2a', background:'#111'}}>
-        <div className="mono text-xs" style={{color:'#444'}}>
+      <div className="mt-6 px-4 py-3 border" style={{borderColor:'var(--border)', background:'var(--surface)'}}>
+        <div className="mono text-xs" style={{color:'var(--muted)'}}>
           💡 Los botones de acceso rápido (HOY, 7 DÍAS, etc.) aplican el rango automáticamente. Los PDFs usan membrete TOOLCRIP en negro/naranja.
         </div>
       </div>
@@ -445,7 +445,7 @@ function ReporteCard({ title, color, desc, loading, onExcel, onPDF, idExcel, idP
       <div className="flex items-center justify-between">
         <div>
           <div className="display text-lg mb-0.5" style={{color}}>{title}</div>
-          <div className="mono text-xs" style={{color:'#555'}}>{desc}</div>
+          <div className="mono text-xs" style={{color:'var(--muted)'}}>{desc}</div>
         </div>
         <BtnsExportPDF loading={loading} idExcel={idExcel} idPDF={idPDF} onExcel={onExcel} onPDF={onPDF} />
       </div>
@@ -460,13 +460,13 @@ function BtnsExportPDF({ loading, idExcel, idPDF, onExcel, onPDF }) {
         className="btn-ghost flex items-center gap-2 px-4 py-2.5"
         style={{borderColor:'#2ecc7150', color:'#2ecc71'}}>
         <FileSpreadsheet size={15} />
-        <span className="mono" style={{fontSize:'11px'}}>{loading[idExcel] ? 'GENERANDO...' : 'EXCEL'}</span>
+        <span className="mono" style={{fontSize:'12px'}}>{loading[idExcel] ? 'GENERANDO...' : 'EXCEL'}</span>
       </button>
       <button onClick={onPDF} disabled={loading[idPDF]}
         className="btn-ghost flex items-center gap-2 px-4 py-2.5"
         style={{borderColor:'#e74c3c50', color:'#e74c3c'}}>
         <FileText size={15} />
-        <span className="mono" style={{fontSize:'11px'}}>{loading[idPDF] ? 'GENERANDO...' : 'PDF'}</span>
+        <span className="mono" style={{fontSize:'12px'}}>{loading[idPDF] ? 'GENERANDO...' : 'PDF'}</span>
       </button>
     </div>
   )

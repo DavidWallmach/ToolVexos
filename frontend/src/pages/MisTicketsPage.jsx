@@ -73,11 +73,11 @@ export default function MisTicketsPage() {
   const pending = tickets.filter(t => t.status === 'PENDIENTE').length
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>MIS TICKETS</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>MIS TICKETS</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>
             {pending > 0 ? `${pending} TICKET(S) PENDIENTE(S) DE APROBACIÓN` : 'SOLICITUDES DE MATERIAL'}
           </div>
         </div>
@@ -88,11 +88,11 @@ export default function MisTicketsPage() {
 
       {/* Tickets */}
       <div className="space-y-3">
-        {loading ? <div className="mono text-xs" style={{color:'#333'}}>CARGANDO...</div>
+        {loading ? <div className="mono text-xs" style={{color:'var(--muted)'}}>CARGANDO...</div>
         : tickets.length === 0 ? (
           <div className="card p-10 text-center">
-            <Package size={32} style={{color:'#2a2a2a', margin:'0 auto 12px'}} />
-            <div className="mono text-xs" style={{color:'#333'}}>AÚN NO HAS HECHO NINGUNA SOLICITUD</div>
+            <Package size={32} style={{color:'var(--border)', margin:'0 auto 12px'}} />
+            <div className="mono text-xs" style={{color:'var(--muted)'}}>AÚN NO HAS HECHO NINGUNA SOLICITUD</div>
             <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm mt-4 mx-auto">
               + SOLICITAR MATERIAL
             </button>
@@ -104,14 +104,14 @@ export default function MisTicketsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   {statusIcon[t.status]}
                   <span className="mono text-xs font-bold" style={{color: statusColor[t.status]}}>{t.status}</span>
-                  <span className="mono text-xs" style={{color:'#444'}}>·</span>
+                  <span className="mono text-xs" style={{color:'var(--muted)'}}>·</span>
                   <span className="mono text-xs" style={{color:'#f5a623'}}>{t.folio}</span>
                 </div>
-                <div className="text-base font-medium mb-1" style={{color:'#e8e8e8'}}>{t.herramienta?.nombre}</div>
-                <div className="mono text-xs mb-2" style={{color:'#555'}}>{t.herramienta?.codigo} · {t.cantidad} {t.herramienta?.unidad}</div>
+                <div className="text-base font-medium mb-1" style={{color:'var(--text)'}}>{t.herramienta?.nombre}</div>
+                <div className="mono text-xs mb-2" style={{color:'var(--muted)'}}>{t.herramienta?.codigo} · {t.cantidad} {t.herramienta?.unidad}</div>
                 <div>
-                  <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>MOTIVO</div>
-                  <div className="text-sm" style={{color:'#888'}}>
+                  <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>MOTIVO</div>
+                  <div className="text-sm" style={{color:'var(--text-2)'}}>
                     {t.motivo.includes('| Operador:') ? t.motivo.split('| Operador:')[0].trim() : t.motivo}
                   </div>
                   {t.motivo.includes('| Operador:') && (
@@ -128,7 +128,7 @@ export default function MisTicketsPage() {
                           else toast.error('Operador no registrado en Personas')
                         }}
                         className="mono text-xs flex items-center gap-1 px-2 py-1"
-                        style={{color:'#555', border:'1px solid #2a2a2a'}}
+                        style={{color:'var(--muted)', border:'1px solid var(--border)'}}
                       >
                         <History size={11} /> HISTORIAL
                       </button>
@@ -136,15 +136,15 @@ export default function MisTicketsPage() {
                   )}
                 </div>
                 {t.nota && (
-                  <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'#1a1a1a'}}>
-                    <div className="mono text-xs mb-0.5" style={{color:'#555'}}>NOTA DEL ENCARGADO:</div>
-                    <div className="text-xs" style={{color:'#888'}}>{t.nota}</div>
+                  <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'var(--surface2)'}}>
+                    <div className="mono text-xs mb-0.5" style={{color:'var(--muted)'}}>NOTA DEL ENCARGADO:</div>
+                    <div className="text-xs" style={{color:'var(--text-2)'}}>{t.nota}</div>
                   </div>
                 )}
               </div>
               <div className="text-right ml-4">
-                <div className="mono text-xs" style={{color:'#444'}}>{new Date(t.createdAt).toLocaleDateString('es-MX')}</div>
-                <div className="mono text-xs" style={{color:'#333'}}>{new Date(t.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>{new Date(t.createdAt).toLocaleDateString('es-MX')}</div>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>{new Date(t.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
               </div>
             </div>
           </div>
@@ -158,13 +158,13 @@ export default function MisTicketsPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <div className="display text-xl" style={{color:'#f5a623'}}>SOLICITAR MATERIAL</div>
-                <div className="mono text-xs" style={{color:'#444'}}>EL ENCARGADO APROBARÁ TU SOLICITUD</div>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>EL ENCARGADO APROBARÁ TU SOLICITUD</div>
               </div>
               <button onClick={() => setModal(false)} className="btn-ghost p-2 text-xs">✕</button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MATERIAL *</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>MATERIAL *</label>
                 <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
                   <option value="">Seleccionar material...</option>
                   {herramientas.map(h => (
@@ -173,17 +173,17 @@ export default function MisTicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>CANTIDAD *</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>CANTIDAD *</label>
                 <input type="number" min="1" className="input-field mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>MOTIVO / JUSTIFICACIÓN *</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>MOTIVO / JUSTIFICACIÓN *</label>
                 <textarea className="input-field h-20 resize-none" value={form.motivo} onChange={e => set('motivo', e.target.value)} placeholder="¿Para qué necesitas este material? ¿Orden de trabajo?" />
               </div>
 
               {/* Operador */}
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>OPERADOR QUE SOLICITA *</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>OPERADOR QUE SOLICITA *</label>
                 {personas.length > 0 ? (
                   <select className="input-field" value={form.personaId} onChange={handlePersonaSelect}>
                     <option value="">Seleccionar operador registrado...</option>
@@ -200,9 +200,9 @@ export default function MisTicketsPage() {
                 />
               </div>
 
-              <div className="px-3 py-2 border" style={{borderColor:'#2a2a2a', background:'#111'}}>
-                <div className="mono text-xs" style={{color:'#444'}}>
-                  👤 Supervisor: <span style={{color:'#888'}}>{user?.nombre} ({user?.empleado})</span>
+              <div className="px-3 py-2 border" style={{borderColor:'var(--border)', background:'var(--surface)'}}>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>
+                  👤 Supervisor: <span style={{color:'var(--text-2)'}}>{user?.nombre} ({user?.empleado})</span>
                 </div>
               </div>
 
@@ -218,10 +218,10 @@ export default function MisTicketsPage() {
       {historialModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.9)'}}>
           <div className="w-full max-w-lg card" style={{maxHeight:'80vh', overflowY:'auto'}}>
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'#1a1a1a'}}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'var(--surface2)'}}>
               <div>
                 <div className="display text-xl" style={{color:'#f5a623'}}>HISTORIAL — {historialModal.nombre}</div>
-                <div className="mono text-xs" style={{color:'#444'}}>{historialModal.empleado} · {historialModal.departamento || 'Sin departamento'}</div>
+                <div className="mono text-xs" style={{color:'var(--muted)'}}>{historialModal.empleado} · {historialModal.departamento || 'Sin departamento'}</div>
               </div>
               <button onClick={() => setHistorialModal(null)} className="btn-ghost p-2 text-xs">✕</button>
             </div>
@@ -229,13 +229,13 @@ export default function MisTicketsPage() {
               <thead><tr>{['FOLIO','MATERIAL','CANT.','FECHA','STATUS'].map(h=><th key={h} className="th">{h}</th>)}</tr></thead>
               <tbody>
                 {historialTickets.length === 0 ? (
-                  <tr><td colSpan={5} className="td mono text-xs text-center" style={{color:'#333'}}>SIN SOLICITUDES REGISTRADAS</td></tr>
+                  <tr><td colSpan={5} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN SOLICITUDES REGISTRADAS</td></tr>
                 ) : historialTickets.map(t => (
                   <tr key={t.id} className="table-row">
                     <td className="td mono text-xs" style={{color:'#f5a623'}}>{t.folio}</td>
-                    <td className="td text-sm" style={{color:'#e8e8e8'}}>{t.herramienta?.nombre}</td>
-                    <td className="td mono text-xs" style={{color:'#888'}}>{t.cantidad} {t.herramienta?.unidad}</td>
-                    <td className="td mono text-xs" style={{color:'#555'}}>{new Date(t.createdAt).toLocaleDateString('es-MX')}</td>
+                    <td className="td text-sm" style={{color:'var(--text)'}}>{t.herramienta?.nombre}</td>
+                    <td className="td mono text-xs" style={{color:'var(--text-2)'}}>{t.cantidad} {t.herramienta?.unidad}</td>
+                    <td className="td mono text-xs" style={{color:'var(--muted)'}}>{new Date(t.createdAt).toLocaleDateString('es-MX')}</td>
                     <td className="td mono text-xs font-bold" style={{color: statusColor[t.status]}}>{t.status}</td>
                   </tr>
                 ))}

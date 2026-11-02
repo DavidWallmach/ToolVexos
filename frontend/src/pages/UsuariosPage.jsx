@@ -38,11 +38,11 @@ export default function UsuariosPage() {
   const set = (k, v) => setForm(f => ({...f, [k]: v}))
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>USUARIOS</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>{users.length} REGISTRADOS</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>USUARIOS</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>{users.length} REGISTRADOS</div>
         </div>
         <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
           <Plus size={14} /> NUEVO USUARIO
@@ -58,8 +58,8 @@ export default function UsuariosPage() {
             {users.map(u => (
               <tr key={u.id} className="table-row">
                 <td className="td mono text-xs" style={{color:'#f5a623'}}>{u.empleado}</td>
-                <td className="td text-sm" style={{color:'#e8e8e8'}}>{u.nombre}</td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{u.email || '—'}</td>
+                <td className="td text-sm" style={{color:'var(--text)'}}>{u.nombre}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{u.email || '—'}</td>
                 <td className="td"><span className={`mono text-xs font-semibold ${roleColor[u.role]}`}>{u.role}</span></td>
                 <td className="td">{u.activo ? <span className="badge-ok">ACTIVO</span> : <span className="badge-danger">INACTIVO</span>}</td>
                 <td className="td">
@@ -83,12 +83,12 @@ export default function UsuariosPage() {
             <div className="space-y-4">
               {[['N° EMPLEADO','empleado','EMP-001'],['NOMBRE COMPLETO','nombre','Juan Pérez'],['EMAIL (opcional)','email','correo@empresa.com'],['CONTRASEÑA','password','']].map(([label,key,ph]) => (
                 <div key={key}>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>{label}</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>{label}</label>
                   <input type={key==='password'?'password':'text'} className="input-field mono" value={form[key]} onChange={e => set(key, e.target.value)} placeholder={ph} />
                 </div>
               ))}
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>ROL</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>ROL</label>
                 <select className="input-field" value={form.role} onChange={e => set('role', e.target.value)}>
                   <option value="TOOLCRIP">TOOLCRIP — Encargado del almacén (sin gestión de usuarios)</option>
                   <option value="SUPERVISOR">SUPERVISOR — Solo solicitar material y ver inventario</option>

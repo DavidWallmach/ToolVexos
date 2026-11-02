@@ -40,11 +40,11 @@ export default function MantenimientoPage() {
   const set = (k, v) => setForm(f => ({...f, [k]: v}))
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>MANTENIMIENTO</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>{items.filter(i=>i.status!=='completado').length} PENDIENTES</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>MANTENIMIENTO</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>{items.filter(i=>i.status!=='completado').length} PENDIENTES</div>
         </div>
         {isAdmin && (
           <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
@@ -59,17 +59,17 @@ export default function MantenimientoPage() {
             <tr>{['HERRAMIENTA','TIPO','DESCRIPCIÓN','TÉCNICO','FECHA','STATUS',''].map(h=><th key={h} className="th">{h}</th>)}</tr>
           </thead>
           <tbody>
-            {items.length === 0 ? <tr><td colSpan={7} className="td mono text-xs text-center" style={{color:'#333'}}>SIN REGISTROS</td></tr>
+            {items.length === 0 ? <tr><td colSpan={7} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN REGISTROS</td></tr>
             : items.map(m => (
               <tr key={m.id} className="table-row">
                 <td className="td">
-                  <div className="text-sm" style={{color:'#e8e8e8'}}>{m.herramienta?.nombre}</div>
-                  <div className="mono text-xs" style={{color:'#444'}}>{m.herramienta?.codigo}</div>
+                  <div className="text-sm" style={{color:'var(--text)'}}>{m.herramienta?.nombre}</div>
+                  <div className="mono text-xs" style={{color:'var(--muted)'}}>{m.herramienta?.codigo}</div>
                 </td>
-                <td className="td mono text-xs" style={{color:'#888'}}>{m.tipo.toUpperCase()}</td>
-                <td className="td text-sm" style={{color:'#888', maxWidth:'200px'}}>{m.descripcion}</td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{m.tecnico || '—'}</td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{new Date(m.fechaInicio).toLocaleDateString('es-MX')}</td>
+                <td className="td mono text-xs" style={{color:'var(--text-2)'}}>{m.tipo.toUpperCase()}</td>
+                <td className="td text-sm" style={{color:'var(--text-2)', maxWidth:'200px'}}>{m.descripcion}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{m.tecnico || '—'}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{new Date(m.fechaInicio).toLocaleDateString('es-MX')}</td>
                 <td className="td mono text-xs font-semibold"><span className={statusColor[m.status]}>{m.status.toUpperCase()}</span></td>
                 <td className="td">
                   {isAdmin && m.status !== 'completado' && (
@@ -93,7 +93,7 @@ export default function MantenimientoPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>HERRAMIENTA</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>HERRAMIENTA</label>
                 <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
                   <option value="">Seleccionar...</option>
                   {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo})</option>)}
@@ -101,19 +101,19 @@ export default function MantenimientoPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>TIPO</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>TIPO</label>
                   <select className="input-field" value={form.tipo} onChange={e => set('tipo', e.target.value)}>
                     <option value="preventivo">PREVENTIVO</option>
                     <option value="correctivo">CORRECTIVO</option>
                   </select>
                 </div>
                 <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>TÉCNICO</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>TÉCNICO</label>
                   <input className="input-field" value={form.tecnico} onChange={e => set('tecnico', e.target.value)} placeholder="Nombre..." />
                 </div>
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>DESCRIPCIÓN</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>DESCRIPCIÓN</label>
                 <textarea className="input-field h-20 resize-none" value={form.descripcion} onChange={e => set('descripcion', e.target.value)} placeholder="Describe el trabajo..." />
               </div>
               <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest">REGISTRAR</button>

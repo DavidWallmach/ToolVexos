@@ -76,11 +76,11 @@ export default function PersonasPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>PERSONAS</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>OPERADORES Y PERSONAL AUTORIZADO — {personas.length} REGISTRADOS</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>PERSONAS</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>OPERADORES Y PERSONAL AUTORIZADO — {personas.length} REGISTRADOS</div>
         </div>
         {isAdmin && (
           <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
@@ -96,28 +96,28 @@ export default function PersonasPage() {
           </thead>
           <tbody>
             {personas.length === 0 ? (
-              <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'#333'}}>SIN PERSONAS REGISTRADAS</td></tr>
+              <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN PERSONAS REGISTRADAS</td></tr>
             ) : personas.map(p => (
               <tr key={p.id} className="table-row">
                 <td className="td mono text-xs" style={{color:'#f5a623'}}>{p.empleado}</td>
                 <td className="td">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center mono text-sm font-bold flex-shrink-0"
-                      style={{background:'#1a1a1a', color:'#f5a623', border:'1px solid #2a2a2a'}}>
+                      style={{background:'var(--surface2)', color:'#f5a623', border:'1px solid var(--border)'}}>
                       {p.nombre[0].toUpperCase()}
                     </div>
-                    <span className="text-sm" style={{color:'#e8e8e8'}}>{p.nombre}</span>
+                    <span className="text-sm" style={{color:'var(--text)'}}>{p.nombre}</span>
                   </div>
                 </td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{p.departamento || '—'}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{p.departamento || '—'}</td>
                 <td className="td">
                   {p.turno
-                    ? <span className="mono text-xs font-semibold" style={{color: turnoColor[p.turno] || '#888'}}>{p.turno}</span>
-                    : <span style={{color:'#333'}}>—</span>}
+                    ? <span className="mono text-xs font-semibold" style={{color: turnoColor[p.turno] || 'var(--text-2)'}}>{p.turno}</span>
+                    : <span style={{color:'var(--muted)'}}>—</span>}
                 </td>
                 <td className="td">
                   <span className="mono text-sm font-bold" style={{color:'#f5a623'}}>{p._count?.salidas || 0}</span>
-                  <span className="mono text-xs ml-1" style={{color:'#444'}}>salidas</span>
+                  <span className="mono text-xs ml-1" style={{color:'var(--muted)'}}>salidas</span>
                 </td>
                 <td className="td">
                   <div className="flex gap-2">
@@ -148,12 +148,12 @@ export default function PersonasPage() {
             <div className="space-y-4">
               {[['NOMBRE COMPLETO *','nombre','Juan Pérez'],['N° EMPLEADO *','empleado','EMP-001'],['DEPARTAMENTO','departamento','Producción, Mantenimiento...']].map(([label,key,ph]) => (
                 <div key={key}>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>{label}</label>
+                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>{label}</label>
                   <input className="input-field" value={form[key]} onChange={e => set(key, e.target.value)} placeholder={ph} />
                 </div>
               ))}
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555',fontSize:'10px'}}>TURNO</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>TURNO</label>
                 <select className="input-field" value={form.turno} onChange={e => set('turno', e.target.value)}>
                   <option value="">Sin especificar</option>
                   <option value="Matutino">Matutino</option>
@@ -172,7 +172,7 @@ export default function PersonasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.92)'}}>
           <div className="w-full max-w-2xl card" style={{maxHeight:'85vh', display:'flex', flexDirection:'column'}}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{borderColor:'#1a1a1a'}}>
+            <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{borderColor:'var(--surface2)'}}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center mono text-lg font-bold"
                   style={{background:'#f5a62320', color:'#f5a623', border:'1px solid #f5a62340'}}>
@@ -180,7 +180,7 @@ export default function PersonasPage() {
                 </div>
                 <div>
                   <div className="display text-xl" style={{color:'#f5a623'}}>{historialModal.nombre}</div>
-                  <div className="mono text-xs" style={{color:'#444'}}>
+                  <div className="mono text-xs" style={{color:'var(--muted)'}}>
                     {historialModal.empleado}
                     {historialModal.departamento ? ` · ${historialModal.departamento}` : ''}
                     {historialModal.turno ? ` · ${historialModal.turno}` : ''}
@@ -194,28 +194,28 @@ export default function PersonasPage() {
 
             <div className="overflow-y-auto flex-1 p-6">
               {historialLoading ? (
-                <div className="mono text-xs text-center py-8" style={{color:'#333'}}>CARGANDO HISTORIAL...</div>
+                <div className="mono text-xs text-center py-8" style={{color:'var(--muted)'}}>CARGANDO HISTORIAL...</div>
               ) : (
                 <>
                   {/* Stats resumen */}
                   <div className="grid grid-cols-3 gap-3 mb-6">
-                    <div className="p-4 text-center" style={{background:'#111', border:'1px solid #1a1a1a', borderLeft:'2px solid #f5a623'}}>
+                    <div className="p-4 text-center" style={{background:'var(--surface)', border:'1px solid var(--border)', borderLeft:'2px solid #f5a623'}}>
                       <div className="display text-3xl" style={{color:'#f5a623'}}>
                         {historial.tickets?.length || 0}
                       </div>
-                      <div className="mono text-xs mt-1" style={{color:'#555', fontSize:'10px'}}>TICKETS VÍA SISTEMA</div>
+                      <div className="mono text-xs mt-1" style={{color:'var(--muted)', fontSize:'12px'}}>TICKETS VÍA SISTEMA</div>
                     </div>
-                    <div className="p-4 text-center" style={{background:'#111', border:'1px solid #1a1a1a', borderLeft:'2px solid #3b82f6'}}>
+                    <div className="p-4 text-center" style={{background:'var(--surface)', border:'1px solid var(--border)', borderLeft:'2px solid #3b82f6'}}>
                       <div className="display text-3xl" style={{color:'#3b82f6'}}>
                         {historial.salidas?.length || 0}
                       </div>
-                      <div className="mono text-xs mt-1" style={{color:'#555', fontSize:'10px'}}>SALIDAS DIRECTAS</div>
+                      <div className="mono text-xs mt-1" style={{color:'var(--muted)', fontSize:'12px'}}>SALIDAS DIRECTAS</div>
                     </div>
-                    <div className="p-4 text-center" style={{background:'#111', border:'1px solid #1a1a1a', borderLeft:'2px solid #2ecc71'}}>
+                    <div className="p-4 text-center" style={{background:'var(--surface)', border:'1px solid var(--border)', borderLeft:'2px solid #2ecc71'}}>
                       <div className="display text-3xl" style={{color:'#2ecc71'}}>
                         {(historial.tickets?.length || 0) + (historial.salidas?.length || 0)}
                       </div>
-                      <div className="mono text-xs mt-1" style={{color:'#555', fontSize:'10px'}}>TOTAL SOLICITUDES</div>
+                      <div className="mono text-xs mt-1" style={{color:'var(--muted)', fontSize:'12px'}}>TOTAL SOLICITUDES</div>
                     </div>
                   </div>
 
@@ -240,14 +240,14 @@ export default function PersonasPage() {
                           {historial.tickets.map(t => (
                             <tr key={t.id} className="table-row">
                               <td className="td mono text-xs" style={{color:'#f5a623'}}>{t.folio}</td>
-                              <td className="td mono text-xs" style={{color:'#555'}}>
+                              <td className="td mono text-xs" style={{color:'var(--muted)'}}>
                                 {new Date(t.createdAt).toLocaleDateString('es-MX')}
                               </td>
                               <td className="td">
-                                <div className="text-sm" style={{color:'#e8e8e8'}}>{t.herramienta?.nombre}</div>
-                                <div className="mono text-xs" style={{color:'#444'}}>{t.herramienta?.codigo}</div>
+                                <div className="text-sm" style={{color:'var(--text)'}}>{t.herramienta?.nombre}</div>
+                                <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.herramienta?.codigo}</div>
                               </td>
-                              <td className="td mono text-xs" style={{color:'#888'}}>
+                              <td className="td mono text-xs" style={{color:'var(--text-2)'}}>
                                 {t.cantidad} {t.herramienta?.unidad}
                               </td>
                               <td className="td mono text-xs font-bold" style={{color:'#2ecc71'}}>
@@ -281,17 +281,17 @@ export default function PersonasPage() {
                         <tbody>
                           {historial.salidas.map(s => (
                             <tr key={s.id} className="table-row">
-                              <td className="td mono text-xs" style={{color:'#555'}}>
+                              <td className="td mono text-xs" style={{color:'var(--muted)'}}>
                                 {new Date(s.createdAt).toLocaleDateString('es-MX')}
                               </td>
                               <td className="td">
-                                <div className="text-sm" style={{color:'#e8e8e8'}}>{s.herramienta?.nombre}</div>
-                                <div className="mono text-xs" style={{color:'#444'}}>{s.herramienta?.codigo}</div>
+                                <div className="text-sm" style={{color:'var(--text)'}}>{s.herramienta?.nombre}</div>
+                                <div className="mono text-xs" style={{color:'var(--muted)'}}>{s.herramienta?.codigo}</div>
                               </td>
                               <td className="td mono text-xs font-bold" style={{color:'#f5a623'}}>
                                 {s.cantidad} {s.herramienta?.unidad}
                               </td>
-                              <td className="td text-xs" style={{color:'#555'}}>{s.proposito || '—'}</td>
+                              <td className="td text-xs" style={{color:'var(--muted)'}}>{s.proposito || '—'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -302,11 +302,11 @@ export default function PersonasPage() {
                   {/* Sin historial */}
                   {!historial.tickets?.length && !historial.salidas?.length && (
                     <div className="text-center py-10">
-                      <Package size={32} style={{color:'#2a2a2a', margin:'0 auto 12px'}} />
-                      <div className="mono text-xs" style={{color:'#333'}}>
+                      <Package size={32} style={{color:'var(--border)', margin:'0 auto 12px'}} />
+                      <div className="mono text-xs" style={{color:'var(--muted)'}}>
                         SIN HISTORIAL DE SOLICITUDES REGISTRADO
                       </div>
-                      <div className="mono text-xs mt-1" style={{color:'#222'}}>
+                      <div className="mono text-xs mt-1" style={{color:'var(--border)'}}>
                         El historial aparece cuando se despachan tickets con este operador
                       </div>
                     </div>

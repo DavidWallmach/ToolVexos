@@ -45,11 +45,11 @@ export default function InventarioPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="display text-3xl" style={{color:'#e8e8e8'}}>INVENTARIO</div>
-          <div className="mono text-xs mt-0.5" style={{color:'#444'}}>{herramientas.length} HERRAMIENTAS REGISTRADAS</div>
+          <div className="display text-3xl" style={{color:'var(--text)'}}>INVENTARIO</div>
+          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>{herramientas.length} HERRAMIENTAS REGISTRADAS</div>
         </div>
         {['ADMIN', 'TOOLCRIP'].includes(user?.role) && (
   <button onClick={() => { setSelected(null); setModal(true) }} className="btn-accent display tracking-widest text-sm">
@@ -60,7 +60,7 @@ export default function InventarioPage() {
       {/* Filtros */}
       <div className="flex gap-3 mb-6">
         <div className="flex-1 relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'#444'}} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--muted)'}} />
           <input className="input-field pl-9" placeholder="BUSCAR POR NOMBRE O CÓDIGO..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input-field w-44" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
@@ -85,25 +85,25 @@ export default function InventarioPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="td mono text-xs text-center" style={{color:'#333'}}>CARGANDO...</td></tr>
+              <tr><td colSpan={8} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>CARGANDO...</td></tr>
             ) : herramientas.length === 0 ? (
-              <tr><td colSpan={8} className="td mono text-xs text-center" style={{color:'#333'}}>SIN RESULTADOS</td></tr>
+              <tr><td colSpan={8} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN RESULTADOS</td></tr>
             ) : herramientas.map(h => (
               <tr key={h.id} className="table-row cursor-pointer" onClick={() => { setSelected(h); setModal(true) }}>
                 <td className="td mono text-xs" style={{color:'#f5a623'}}>{h.codigo}</td>
                 <td className="td">
-                  <div className="text-sm" style={{color:'#e8e8e8'}}>{h.nombre}</div>
-                  {h.descripcion && <div className="text-xs mt-0.5" style={{color:'#444'}}>{h.descripcion}</div>}
+                  <div className="text-sm" style={{color:'var(--text)'}}>{h.nombre}</div>
+                  {h.descripcion && <div className="text-xs mt-0.5" style={{color:'var(--muted)'}}>{h.descripcion}</div>}
                 </td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{h.categoria?.nombre}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{h.categoria?.nombre}</td>
                 <td className="td">
                   <span className="mono text-sm font-semibold" style={{color: stockColor(h)}}>{h.stockDisp}</span>
-                  <span className="mono text-xs ml-1" style={{color:'#444'}}>{h.unidad}</span>
+                  <span className="mono text-xs ml-1" style={{color:'var(--muted)'}}>{h.unidad}</span>
                 </td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{h.stockTotal} {h.unidad}</td>
-                <td className="td mono text-xs" style={{color:'#555'}}>{h.ubicacion || '—'}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{h.stockTotal} {h.unidad}</td>
+                <td className="td mono text-xs" style={{color:'var(--muted)'}}>{h.ubicacion || '—'}</td>
                 <td className="td">{statusBadge[h.status]}</td>
-                <td className="td"><ChevronRight size={14} style={{color:'#333'}} /></td>
+                <td className="td"><ChevronRight size={14} style={{color:'var(--muted)'}} /></td>
               </tr>
             ))}
           </tbody>

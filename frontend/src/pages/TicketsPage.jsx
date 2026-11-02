@@ -78,7 +78,7 @@ function TicketPrint({ ticket, encargado, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.92)'}}>
       <div className="card" style={{maxWidth:'480px', width:'100%', maxHeight:'90vh', overflowY:'auto'}}>
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'#1a1a1a'}}>
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'var(--surface2)'}}>
           <div className="display text-xl" style={{color:'#f5a623'}}>VISTA PREVIA — {ticket.folio}</div>
           <div className="flex gap-2">
             <button onClick={handlePrint} className="btn-accent display tracking-widest text-sm">
@@ -106,7 +106,7 @@ function TicketPrint({ ticket, encargado, onClose }) {
               <div className="section">
                 <div className="label">Solicitante</div>
                 <div className="value-sm">{ticket.user?.nombre}</div>
-                <div style={{fontSize:'9px', color:'#666'}}>{ticket.user?.empleado} · {ticket.user?.role}</div>
+                <div style={{fontSize:'12px', color:'var(--muted)'}}>{ticket.user?.empleado} · {ticket.user?.role}</div>
               </div>
               <div className="section">
                 <div className="label">Operador</div>
@@ -120,7 +120,7 @@ function TicketPrint({ ticket, encargado, onClose }) {
             <div className="section">
               <div className="label">Material</div>
               <div className="value">{ticket.herramienta?.nombre}</div>
-              <div style={{fontSize:'10px', color:'#666'}}>{ticket.herramienta?.codigo}</div>
+              <div style={{fontSize:'12px', color:'var(--muted)'}}>{ticket.herramienta?.codigo}</div>
             </div>
 
             {/* Cantidad */}
@@ -129,7 +129,7 @@ function TicketPrint({ ticket, encargado, onClose }) {
               <div className="cantidad-num">{ticket.cantidadDespachada || ticket.cantidad}</div>
               <div className="cantidad-unit">{ticket.herramienta?.unidad}</div>
               {ticket.cantidadDespachada < ticket.cantidad && (
-                <div style={{fontSize:'9px', color:'#666', marginTop:'4px'}}>
+                <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'4px'}}>
                   de {ticket.cantidad} solicitadas — DESPACHO PARCIAL
                 </div>
               )}
@@ -147,11 +147,11 @@ function TicketPrint({ ticket, encargado, onClose }) {
             <div className="grid">
               <div className="section">
                 <div className="label">Fecha solicitud</div>
-                <div style={{fontSize:'10px'}}>{new Date(ticket.createdAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})}</div>
+                <div style={{fontSize:'12px'}}>{new Date(ticket.createdAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})}</div>
               </div>
               <div className="section">
                 <div className="label">Fecha impresión</div>
-                <div style={{fontSize:'10px'}}>{fechaImpresion}</div>
+                <div style={{fontSize:'12px'}}>{fechaImpresion}</div>
               </div>
             </div>
 
@@ -160,7 +160,7 @@ function TicketPrint({ ticket, encargado, onClose }) {
             {ticket.nota && (
               <div className="section">
                 <div className="label">Nota del encargado</div>
-                <div style={{fontSize:'10px'}}>{ticket.nota}</div>
+                <div style={{fontSize:'12px'}}>{ticket.nota}</div>
               </div>
             )}
 
@@ -169,11 +169,11 @@ function TicketPrint({ ticket, encargado, onClose }) {
             {/* Firma */}
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginTop:'16px'}}>
               <div className="firma">
-                <div style={{fontSize:'9px', color:'#666'}}>Firma Solicitante</div>
+                <div style={{fontSize:'12px', color:'var(--muted)'}}>Firma Solicitante</div>
               </div>
               <div className="firma">
-                <div style={{fontSize:'9px', color:'#666'}}>Firma Encargado Tool Crib</div>
-                {encargado && <div style={{fontSize:'9px', marginTop:'2px'}}>{encargado}</div>}
+                <div style={{fontSize:'12px', color:'var(--muted)'}}>Firma Encargado Tool Crib</div>
+                {encargado && <div style={{fontSize:'12px', marginTop:'2px'}}>{encargado}</div>}
               </div>
             </div>
 
@@ -237,22 +237,22 @@ export default function TicketsPage() {
   const pendingCount = tickets.filter(t => ['PENDIENTE','PARCIAL'].includes(t.status)).length
 
   return (
-    <div className="p-8">
+    <div className="page-padding">
       <div className="mb-6">
-        <div className="display text-3xl" style={{color:'#e8e8e8'}}>TICKETS DE SOLICITUD</div>
-        <div className="mono text-xs mt-0.5" style={{color:'#444'}}>
+        <div className="display text-3xl" style={{color:'var(--text)'}}>TICKETS DE SOLICITUD</div>
+        <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>
           {pendingCount > 0 ? `${pendingCount} TICKET(S) REQUIEREN ATENCIÓN` : 'GESTIÓN DE SOLICITUDES'}
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-1 mb-5 p-1 w-fit" style={{background:'#111', border:'1px solid #1a1a1a'}}>
+      <div className="flex gap-1 mb-5 p-1 w-fit" style={{background:'var(--surface)', border:'1px solid var(--border)'}}>
         {['PENDIENTE','PARCIAL','DESPACHADO','RECHAZADO','TODOS'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className="mono px-4 py-2 text-xs transition-all"
             style={{
               background: filter === f ? (statusColor[f] || '#f5a623') : 'transparent',
-              color: filter === f ? '#000' : '#555',
+              color: filter === f ? '#000' : 'var(--muted)',
               fontWeight: filter === f ? '700' : '400',
               letterSpacing: '0.08em'
             }}
@@ -261,10 +261,10 @@ export default function TicketsPage() {
       </div>
 
       <div className="space-y-3">
-        {loading ? <div className="mono text-xs" style={{color:'#333'}}>CARGANDO...</div>
+        {loading ? <div className="mono text-xs" style={{color:'var(--muted)'}}>CARGANDO...</div>
         : tickets.length === 0 ? (
           <div className="card p-8 text-center">
-            <div className="mono text-xs" style={{color:'#333'}}>NO HAY TICKETS {filter !== 'TODOS' ? `CON STATUS "${filter}"` : ''}</div>
+            <div className="mono text-xs" style={{color:'var(--muted)'}}>NO HAY TICKETS {filter !== 'TODOS' ? `CON STATUS "${filter}"` : ''}</div>
           </div>
         ) : tickets.map(t => {
           const pendiente = t.cantidad - (t.cantidadDespachada || 0)
@@ -282,28 +282,28 @@ export default function TicketsPage() {
                       style={{background: statusColor[t.status]+'20', color: statusColor[t.status], border:`1px solid ${statusColor[t.status]}40`}}>
                       {t.status}
                     </span>
-                    <span className="mono text-xs" style={{color:'#444'}}>
+                    <span className="mono text-xs" style={{color:'var(--muted)'}}>
                       {new Date(t.createdAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 mb-3">
                     <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>MATERIAL</div>
-                      <div className="text-sm font-medium" style={{color:'#e8e8e8'}}>{t.herramienta?.nombre}</div>
-                      <div className="mono text-xs" style={{color:'#555'}}>{t.herramienta?.codigo}</div>
+                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>MATERIAL</div>
+                      <div className="text-sm font-medium" style={{color:'var(--text)'}}>{t.herramienta?.nombre}</div>
+                      <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.herramienta?.codigo}</div>
                     </div>
                     <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>CANTIDAD</div>
+                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>CANTIDAD</div>
                       <div className="display text-2xl" style={{color:'#f5a623'}}>{t.cantidad}</div>
-                      <div className="mono text-xs" style={{color:'#555'}}>{t.herramienta?.unidad} solicitadas</div>
+                      <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.herramienta?.unidad} solicitadas</div>
                     </div>
                     <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>PROGRESO</div>
+                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>PROGRESO</div>
                       <div className="display text-2xl" style={{color: statusColor[t.status]}}>
                         {t.cantidadDespachada || 0}/{t.cantidad}
                       </div>
-                      <div className="mono text-xs" style={{color:'#555'}}>
+                      <div className="mono text-xs" style={{color:'var(--muted)'}}>
                         {pendiente > 0 ? `${pendiente} pendiente(s)` : 'completo'}
                       </div>
                     </div>
@@ -311,7 +311,7 @@ export default function TicketsPage() {
 
                   {t.cantidadDespachada > 0 && (
                     <div className="mb-3">
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{background:'#2a2a2a'}}>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
                         <div className="h-full rounded-full transition-all"
                           style={{width:`${(t.cantidadDespachada/t.cantidad)*100}%`, background: statusColor[t.status]}} />
                       </div>
@@ -320,13 +320,13 @@ export default function TicketsPage() {
 
                   <div className="grid grid-cols-2 gap-4 mb-2">
                     <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>SOLICITANTE</div>
-                      <div className="text-sm" style={{color:'#e8e8e8'}}>{t.user?.nombre}</div>
-                      <div className="mono text-xs" style={{color:'#555'}}>{t.user?.empleado} · {t.user?.role}</div>
+                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>SOLICITANTE</div>
+                      <div className="text-sm" style={{color:'var(--text)'}}>{t.user?.nombre}</div>
+                      <div className="mono text-xs" style={{color:'var(--muted)'}}>{t.user?.empleado} · {t.user?.role}</div>
                     </div>
                     <div>
-                      <div className="mono text-xs mb-0.5" style={{color:'#444', fontSize:'10px'}}>MOTIVO / OPERADOR</div>
-                      <div className="text-xs" style={{color:'#888'}}>
+                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)', fontSize:'12px'}}>MOTIVO / OPERADOR</div>
+                      <div className="text-xs" style={{color:'var(--text-2)'}}>
                         {t.motivo.includes('| Operador:') ? t.motivo.split('| Operador:')[0].trim() : t.motivo}
                       </div>
                       {t.motivo.includes('| Operador:') && (
@@ -340,7 +340,7 @@ export default function TicketsPage() {
                   {puedeDespachar && (
                     <div className="flex items-center gap-2 mt-2">
                       <div className="mono text-xs px-2 py-1"
-                        style={{background:'#1a1a1a', color: stockDisp > 0 ? '#2ecc71' : '#e74c3c', border:`1px solid ${stockDisp > 0 ? '#2ecc7130' : '#e74c3c30'}`}}>
+                        style={{background:'var(--surface2)', color: stockDisp > 0 ? '#2ecc71' : '#e74c3c', border:`1px solid ${stockDisp > 0 ? '#2ecc7130' : '#e74c3c30'}`}}>
                         STOCK ACTUAL: {stockDisp} {t.herramienta?.unidad}
                       </div>
                       {stockDisp === 0 && (
@@ -352,9 +352,9 @@ export default function TicketsPage() {
                   )}
 
                   {t.nota && (
-                    <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'#0a0a0a'}}>
-                      <div className="mono text-xs mb-0.5" style={{color:'#444'}}>NOTA:</div>
-                      <div className="text-xs" style={{color:'#888'}}>{t.nota}</div>
+                    <div className="mt-2 px-3 py-2 border-l-2" style={{borderColor: statusColor[t.status], background:'var(--bg)'}}>
+                      <div className="mono text-xs mb-0.5" style={{color:'var(--muted)'}}>NOTA:</div>
+                      <div className="text-xs" style={{color:'var(--text-2)'}}>{t.nota}</div>
                     </div>
                   )}
                 </div>
@@ -368,9 +368,9 @@ export default function TicketsPage() {
                         disabled={stockDisp === 0}
                         className="flex items-center gap-2 px-4 py-2.5 mono text-xs font-bold"
                         style={{
-                          background: stockDisp > 0 ? '#2ecc7120' : '#2a2a2a',
-                          color: stockDisp > 0 ? '#2ecc71' : '#444',
-                          border: `1px solid ${stockDisp > 0 ? '#2ecc7140' : '#2a2a2a'}`,
+                          background: stockDisp > 0 ? '#2ecc7120' : 'var(--border)',
+                          color: stockDisp > 0 ? '#2ecc71' : 'var(--muted)',
+                          border: `1px solid ${stockDisp > 0 ? '#2ecc7140' : 'var(--border)'}`,
                           cursor: stockDisp === 0 ? 'not-allowed' : 'pointer'
                         }}>
                         <CheckCircle size={13} /> DESPACHAR
@@ -402,7 +402,7 @@ export default function TicketsPage() {
           <div className="w-full max-w-sm card p-6">
             <div className="mb-4">
               <div className="display text-xl mb-1" style={{color:'#2ecc71'}}>DESPACHAR MATERIAL</div>
-              <div className="mono text-xs" style={{color:'#555'}}>{despachoModal.folio} — {despachoModal.herramienta?.nombre}</div>
+              <div className="mono text-xs" style={{color:'var(--muted)'}}>{despachoModal.folio} — {despachoModal.herramienta?.nombre}</div>
             </div>
             <div className="grid grid-cols-3 gap-2 mb-4">
               {[
@@ -410,16 +410,16 @@ export default function TicketsPage() {
                 ['EN STOCK', despachoModal.herramienta?.stockDisp, '#2ecc71'],
                 ['YA DADO', despachoModal.cantidadDespachada||0, '#3b82f6'],
               ].map(([label, val, color]) => (
-                <div key={label} className="p-3 text-center" style={{background:'#1a1a1a', border:'1px solid #2a2a2a'}}>
-                  <div className="mono text-xs mb-1" style={{color:'#555', fontSize:'9px'}}>{label}</div>
+                <div key={label} className="p-3 text-center" style={{background:'var(--surface2)', border:'1px solid var(--border)'}}>
+                  <div className="mono text-xs mb-1" style={{color:'var(--muted)', fontSize:'12px'}}>{label}</div>
                   <div className="display text-2xl" style={{color}}>{val}</div>
-                  <div className="mono text-xs" style={{color:'#444'}}>{despachoModal.herramienta?.unidad}</div>
+                  <div className="mono text-xs" style={{color:'var(--muted)'}}>{despachoModal.herramienta?.unidad}</div>
                 </div>
               ))}
             </div>
             <div className="space-y-3">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>CANTIDAD A DESPACHAR</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>CANTIDAD A DESPACHAR</label>
                 <input type="number" min="1"
                   max={Math.min(despachoModal.cantidad-(despachoModal.cantidadDespachada||0), despachoModal.herramienta?.stockDisp||0)}
                   className="input-field mono text-lg" value={cantidadDespachar}
@@ -431,7 +431,7 @@ export default function TicketsPage() {
                 )}
               </div>
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>NOTA (opcional)</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>NOTA (opcional)</label>
                 <input className="input-field" value={nota} onChange={e => setNota(e.target.value)}
                   placeholder="Ej: Resto disponible el lunes..." />
               </div>
@@ -453,11 +453,11 @@ export default function TicketsPage() {
           <div className="w-full max-w-sm card p-6">
             <div className="mb-4">
               <div className="display text-xl mb-1" style={{color:'#e74c3c'}}>RECHAZAR TICKET</div>
-              <div className="mono text-xs" style={{color:'#555'}}>{rechazarModal.folio} — {rechazarModal.herramienta?.nombre}</div>
+              <div className="mono text-xs" style={{color:'var(--muted)'}}>{rechazarModal.folio} — {rechazarModal.herramienta?.nombre}</div>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'#555', fontSize:'10px'}}>MOTIVO DEL RECHAZO</label>
+                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)', fontSize:'12px'}}>MOTIVO DEL RECHAZO</label>
                 <textarea className="input-field h-20 resize-none" value={nota} onChange={e => setNota(e.target.value)}
                   placeholder="Ej: Sin stock, material en mantenimiento..." />
               </div>
