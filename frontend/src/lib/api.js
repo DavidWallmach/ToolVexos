@@ -14,7 +14,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // Un 401 en el login es contraseña incorrecta: recargar borraría el mensaje
+    if (err.response?.status === 401 && err.config?.url !== '/auth/login') {
       localStorage.removeItem('tc_token')
       window.location.href = '/login'
     }

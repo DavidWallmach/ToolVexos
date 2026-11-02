@@ -1,13 +1,15 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 
-const prisma = new PrismaClient()
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '12h' })
 
 export const login = async (req, res, next) => {
   try {
     const { empleado, password } = req.body
+    if (typeof empleado !== 'string' || typeof password !== 'string' || !empleado || !password) {
+      return res.status(400).json({ error: 'Ingresa tu número de empleado y contraseña.' })
+    }
     const user = await prisma.user.findUnique({ where: { empleado } })
     if (!user || !user.activo) return res.status(401).json({ error: 'Credenciales incorrectas o usuario inactivo.' })
     const valid = await bcrypt.compare(password, user.password)

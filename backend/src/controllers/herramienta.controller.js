@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import { descontarStock, HttpError, parseCantidad, parseNoNegativo, sumarStock, TX_OPTS } from '../lib/stock.js'
-const prisma = new PrismaClient()
 
 const CAMPOS_EDITABLES = ['codigo', 'nombre', 'descripcion', 'categoriaId', 'ubicacion_texto', 'unidad']
 const TIPOS_AJUSTE = ['ENTRADA', 'AJUSTE', 'BAJA']

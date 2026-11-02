@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import useAuthStore from './hooks/useAuth'
 
 import Layout from './components/layout/Layout'
+import ErrorBoundary, { PantallaMensaje } from './components/layout/ErrorBoundary'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import InventarioPage from './pages/InventarioPage'
@@ -21,9 +22,19 @@ import TicketsPage from './pages/TicketsPage'
 import MisTicketsPage from './pages/MisTicketsPage'
 import DisponiblePage from './pages/DisponiblePage'
 
+// Con token guardado hay que esperar a /auth/me antes de decidir a dónde redirigir
+function EsperandoSesion() {
+  const { sessionError, fetchMe } = useAuthStore()
+  if (sessionError) {
+    return <PantallaMensaje titulo="Sin conexión con el servidor" detalle="Revisa tu conexión e intenta de nuevo." accion="Reintentar" onAccion={fetchMe} />
+  }
+  return <PantallaMensaje titulo="Cargando" detalle="Verificando tu sesión." />
+}
+
 function Private({ children }) {
-  const token = useAuthStore(s => s.token)
-  return token ? children : <Navigate to="/login" replace />
+  const { token, user } = useAuthStore()
+  if (!token) return <Navigate to="/login" replace />
+  return user ? children : <EsperandoSesion />
 }
 
 function AdminOnly({ children }) {
@@ -37,8 +48,9 @@ function EncargadoOnly({ children }) {
 }
 
 function RootRedirect() {
-  const user = useAuthStore(s => s.user)
-  if (!user) return <Navigate to="/login" replace />
+  const { token, user } = useAuthStore()
+  if (!token) return <Navigate to="/login" replace />
+  if (!user) return <EsperandoSesion />
   if (['SUPERVISOR','JEFE_GRUPO','OPERADOR'].includes(user.role)) return <Navigate to="/app/disponible" replace />
   return <Navigate to="/app" replace />
 }
@@ -48,10 +60,11 @@ export default function App() {
   useEffect(() => { if (token) fetchMe() }, [])
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Toaster position="bottom-right" toastOptions={{
-        style: { background:'#1a1a1a', color:'#e8e8e8', border:'1px solid #2a2a2a', fontFamily:'IBM Plex Mono', fontSize:'12px' },
-        success: { iconTheme: { primary:'#f5a623', secondary:'#0a0a0a' } }
+        style: { background:'var(--surface2)', color:'var(--text)', border:'1px solid var(--border)', borderRadius:'8px', fontSize:'14px' },
+        success: { iconTheme: { primary:'#f5a623', secondary:'#101114' } }
       }} />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
@@ -78,5 +91,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

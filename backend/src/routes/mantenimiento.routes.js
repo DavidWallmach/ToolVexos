@@ -1,9 +1,8 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import { protect, adminOnly } from '../middleware/auth.middleware.js'
 import { TX_OPTS } from '../lib/stock.js'
 const router = Router()
-const prisma = new PrismaClient()
 
 router.get('/', protect, async (req, res, next) => {
   try {

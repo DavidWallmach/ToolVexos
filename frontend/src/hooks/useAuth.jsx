@@ -6,6 +6,7 @@ const useAuthStore = create((set) => ({
   token: localStorage.getItem('tc_token'),
   loading: false,
   error: null,
+  sessionError: false,
 
   login: async (empleado, password) => {
     set({ loading: true, error: null })
@@ -21,12 +22,18 @@ const useAuthStore = create((set) => ({
   },
 
   fetchMe: async () => {
+    set({ sessionError: false })
     try {
       const { data } = await api.get('/auth/me')
       set({ user: data.user })
-    } catch {
-      set({ user: null, token: null })
-      localStorage.removeItem('tc_token')
+    } catch (err) {
+      // Solo un 401 cierra la sesión: una falla de red o del servidor se puede reintentar
+      if (err.response?.status === 401) {
+        set({ user: null, token: null })
+        localStorage.removeItem('tc_token')
+      } else {
+        set({ sessionError: true })
+      }
     }
   },
 

@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import { conFolio, descontarStock, HttpError, parseCantidad, sumarStock, TX_OPTS } from '../lib/stock.js'
-const prisma = new PrismaClient()
 
 export const getAll = async (req, res, next) => {
   try {

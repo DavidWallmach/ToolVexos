@@ -1,9 +1,8 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import { protect, toolcripUp } from '../middleware/auth.middleware.js'
 import { conFolio, descontarStock, HttpError, parseCantidad, TX_OPTS } from '../lib/stock.js'
 const router = Router()
-const prisma = new PrismaClient()
 
 // GET — encargado ve todos, supervisor/jefe ve los suyos
 router.get('/', protect, async (req, res, next) => {

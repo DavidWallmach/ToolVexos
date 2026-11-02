@@ -3,6 +3,9 @@ import api from '../lib/api'
 import useAuthStore from './useAuth'
 import toast from 'react-hot-toast'
 
+// Safari en iPhone no define Notification salvo en apps instaladas
+const notificacionesDisponibles = () => typeof Notification !== 'undefined'
+
 export default function useNotificaciones() {
   const user = useAuthStore(s => s.user)
   const [pendientes, setPendientes] = useState(0)
@@ -63,10 +66,10 @@ export default function useNotificaciones() {
         ), { duration: 8000, position: 'top-right' })
 
         // Notificación del navegador si tiene permiso
-        if (Notification.permission === 'granted') {
+        if (notificacionesDisponibles() && Notification.permission === 'granted') {
           new Notification('🔔 TOOLCRIP — Nuevo ticket', {
             body: `${nuevos} solicitud(es) pendiente(s) de aprobación`,
-            icon: '/vite.svg'
+            icon: '/favicon.svg'
           })
         }
       }
@@ -80,7 +83,7 @@ export default function useNotificaciones() {
     if (!isEncargado) return
 
     // Pedir permiso para notificaciones del navegador
-    if (Notification.permission === 'default') {
+    if (notificacionesDisponibles() && Notification.permission === 'default') {
       Notification.requestPermission()
     }
 

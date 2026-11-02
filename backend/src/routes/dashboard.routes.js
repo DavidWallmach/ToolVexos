@@ -1,9 +1,8 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import { protect } from '../middleware/auth.middleware.js'
 import { inicioVentanaMeses, salidasPorMes } from '../lib/dashboard.js'
 const router = Router()
-const prisma = new PrismaClient()
 
 router.get('/stats', protect, async (req, res, next) => {
   try {
