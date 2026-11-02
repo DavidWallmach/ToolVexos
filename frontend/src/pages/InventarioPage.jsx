@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Search, Package, ChevronRight } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../lib/api'
 import useAuthStore from '../hooks/useAuth'
 import ModalHerramienta from '../components/tools/ModalHerramienta'
@@ -15,7 +16,8 @@ export default function InventarioPage() {
   const user = useAuthStore(s => s.user)
   const [herramientas, setHerramientas] = useState([])
   const [categorias, setCategorias] = useState([])
-  const [search, setSearch] = useState('')
+  const [searchParams] = useSearchParams()
+  const [search, setSearch] = useState(searchParams.get('search') || '')
   const [catFilter, setCatFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [modal, setModal] = useState(false)

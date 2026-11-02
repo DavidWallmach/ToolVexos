@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { protect } from '../middleware/auth.middleware.js'
+import { inicioVentanaMeses, salidasPorMes } from '../lib/dashboard.js'
 const router = Router()
 const prisma = new PrismaClient()
 
@@ -66,6 +67,12 @@ router.get('/stats', protect, async (req, res, next) => {
     })
     const movsSemana = Object.entries(diasMap).map(([dia, counts]) => ({ dia, ...counts }))
 
+    // Piezas despachadas en los últimos 12 meses
+    const salidasAnio = await prisma.movimiento.findMany({
+      where: { tipo: 'SALIDA', createdAt: { gte: inicioVentanaMeses() } },
+      select: { createdAt: true, cantidad: true }
+    })
+
     // Top solicitantes
     const topSolicitantes = await prisma.salida.groupBy({
       by: ['solicitante'],
@@ -79,6 +86,7 @@ router.get('/stats', protect, async (req, res, next) => {
       ultimosMovs, ticketsPendientes,
       topMateriales: topConNombres,
       movsSemana,
+      salidasMensuales: salidasPorMes(salidasAnio),
       topSolicitantes
     })
   } catch (err) { next(err) }

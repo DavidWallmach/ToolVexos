@@ -1,46 +1,188 @@
 import { useEffect, useState } from 'react'
-import { Package, ArrowLeftRight, AlertTriangle, Wrench, Ticket, TrendingUp } from 'lucide-react'
+import { Package, CircleCheck, AlertTriangle, Ticket, Calendar, Search } from 'lucide-react'
 import api from '../lib/api'
 import useAuthStore from '../hooks/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Banner from '../components/layout/Banner'
 
-const tipoColor = { ENTRADA:'#2ecc71', SALIDA:'#f5a623', DEVOLUCION:'#3b82f6', AJUSTE:'#8b5cf6', BAJA:'#e74c3c' }
+const INK = '#09090b'
+const MUTED = '#71717a'
+const BORDER = '#e4e4e7'
+const SERIE = { entradas: '#2563eb', salidas: '#c2410c' }
 
-// ─── Mini Bar Chart ───────────────────────────────────────────
-function BarChart({ data, max, color, label }) {
+const iniciales = (nombre = '') => nombre.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('') || '—'
+
+const fechaDeMes = (mes) => {
+  const [anio, m] = mes.split('-').map(Number)
+  return new Date(anio, m - 1, 1)
+}
+const nombreMes = (mes) => {
+  const t = fechaDeMes(mes).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')
+  return t[0].toUpperCase() + t.slice(1)
+}
+const fechaCorta = (d) => d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+
+// Eje con 4 divisiones redondas (1, 2, 5, 10...) y siempre en piezas enteras
+const escala = (max) => {
+  if (max <= 0) return { paso: 1, tope: 4 }
+  const bruto = max / 4
+  const magnitud = 10 ** Math.floor(Math.log10(bruto))
+  const paso = Math.max(1, Math.ceil([1, 2, 5, 10].map(f => f * magnitud).find(v => v >= bruto)))
+  return { paso, tope: paso * 4 }
+}
+
+const celdaCsv = (valor) => {
+  const texto = String(valor ?? '')
+  const seguro = /^[=+\-@]/.test(texto) ? `'${texto}` : texto
+  return `"${seguro.replace(/"/g, '""')}"`
+}
+
+const descargarCsv = (stats) => {
+  const filas = [
+    ['Salidas por mes'], ['Mes', 'Piezas'],
+    ...(stats.salidasMensuales || []).map(m => [m.mes, m.cantidad]),
+    [], ['Últimos movimientos'], ['Fecha', 'Material', 'Tipo', 'Cantidad', 'Usuario'],
+    ...(stats.ultimosMovs || []).map(m => [new Date(m.createdAt).toISOString().slice(0, 10), m.herramienta?.nombre, m.tipo, m.cantidad, m.user?.nombre]),
+  ]
+  const csv = '﻿' + filas.map(f => f.map(celdaCsv).join(',')).join('\r\n')
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `dashboard-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// ─── Gráfica de barras mensual ────────────────────────────────
+function GraficaMensual({ datos }) {
+  const [activo, setActivo] = useState(null)
+  const { paso, tope } = escala(Math.max(0, ...datos.map(d => d.cantidad)))
+  const marcas = [4, 3, 2, 1, 0].map(i => i * paso)
+  const total = datos.reduce((t, d) => t + d.cantidad, 0)
+
+  if (!datos.length || total === 0) {
+    return <div className="flex items-center justify-center text-sm h-56" style={{ color: MUTED }}>Aún no hay salidas en los últimos 12 meses.</div>
+  }
+
   return (
-    <div className="flex items-end gap-1 h-16">
-      {data.map((item, i) => {
-        const pct = max > 0 ? (item.value / max) * 100 : 0
-        return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full rounded-sm transition-all" title={`${item.label}: ${item.value}`}
-              style={{ height: `${Math.max(pct, 2)}%`, background: color, opacity: 0.8 + (i / data.length) * 0.2 }} />
+    <div>
+      <div className="relative h-56 sm:h-72" role="img" aria-label={`Salidas por mes, ${total} piezas en 12 meses`}>
+        {marcas.map(v => (
+          <div key={v} className="absolute left-0 right-0 flex items-center gap-2" style={{ bottom: `${(v / tope) * 100}%`, transform: 'translateY(50%)' }}>
+            <span className="w-8 text-right text-xs tabular-nums" style={{ color: MUTED }}>{v}</span>
+            <div className="flex-1 h-px" style={{ background: '#f4f4f5' }} />
           </div>
-        )
-      })}
+        ))}
+        <div className="absolute inset-y-0 right-0 flex items-end gap-1 sm:gap-2" style={{ left: '2.5rem' }}>
+          {datos.map((d, i) => (
+            <div key={d.mes} className="relative flex-1 h-full flex items-end justify-center"
+              onMouseEnter={() => setActivo(i)} onMouseLeave={() => setActivo(null)}>
+              {d.cantidad > 0 && (
+                <div className="w-full transition-opacity" style={{
+                  maxWidth: '48px', height: `${(d.cantidad / tope) * 100}%`, background: '#18181b',
+                  borderRadius: '4px 4px 0 0', opacity: activo === null || activo === i ? 1 : 0.55,
+                }} />
+              )}
+              {activo === i && (
+                <div className="absolute z-10 px-2.5 py-1.5 text-xs whitespace-nowrap rounded-md pointer-events-none" style={{
+                  bottom: `calc(${(d.cantidad / tope) * 100}% + 8px)`,
+                  ...(i < 2 ? { left: 0 } : i > datos.length - 3 ? { right: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
+                  background: INK, color: '#fafafa',
+                }}>
+                  {nombreMes(d.mes)} {d.mes.slice(0, 4)}: <b>{d.cantidad}</b> pzas
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-1 sm:gap-2 mt-2" style={{ paddingLeft: '2.5rem' }}>
+        {datos.map(d => (
+          <span key={d.mes} className="flex-1 text-center text-xs truncate" style={{ color: MUTED }}>{nombreMes(d.mes)}</span>
+        ))}
+      </div>
+      <table className="sr-only">
+        <caption>Piezas despachadas por mes</caption>
+        <tbody>{datos.map(d => <tr key={d.mes}><th scope="row">{d.mes}</th><td>{d.cantidad}</td></tr>)}</tbody>
+      </table>
     </div>
   )
 }
 
-// ─── Horizontal Bar ───────────────────────────────────────────
-function HBar({ label, value, max, color, sublabel }) {
-  const pct = max > 0 ? (value / max) * 100 : 0
+// ─── Gráfica de la semana (entradas / salidas) ────────────────
+function GraficaSemana({ datos }) {
+  const max = Math.max(1, ...datos.flatMap(d => [d.entradas || 0, d.salidas || 0]))
+  const Barra = ({ valor, color, etiqueta }) => (
+    <div className="flex-1 min-h-0" title={`${etiqueta}: ${valor}`} style={{
+      height: valor > 0 ? `${Math.max((valor / max) * 100, 4)}%` : 0, background: color, borderRadius: '4px 4px 0 0',
+    }} />
+  )
   return (
-    <div className="mb-3">
-      <div className="flex justify-between items-center mb-1">
-        <div>
-          <span className="text-xs" style={{color:'#e8e8e8'}}>{label}</span>
-          {sublabel && <span className="mono text-xs ml-2" style={{color:'#444'}}>{sublabel}</span>}
-        </div>
-        <span className="mono text-xs font-bold" style={{color}}>{value}</span>
+    <div>
+      <div className="flex gap-4 mb-4">
+        {[['Entradas', SERIE.entradas], ['Salidas', SERIE.salidas]].map(([t, c]) => (
+          <div key={t} className="flex items-center gap-1.5 text-xs" style={{ color: MUTED }}>
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: c }} />{t}
+          </div>
+        ))}
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{background:'#1a1a1a'}}>
-        <div className="h-full rounded-full transition-all duration-500"
-          style={{width:`${pct}%`, background: color}} />
+      <div className="flex items-end gap-2 h-40">
+        {datos.map(d => (
+          <div key={d.dia} className="flex-1 h-full flex items-end justify-center gap-0.5">
+            <Barra valor={d.entradas || 0} color={SERIE.entradas} etiqueta={`${d.dia} entradas`} />
+            <Barra valor={d.salidas || 0} color={SERIE.salidas} etiqueta={`${d.dia} salidas`} />
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2 mt-2 pt-2 border-t" style={{ borderColor: BORDER }}>
+        {datos.map(d => <span key={d.dia} className="flex-1 text-center text-xs truncate" style={{ color: MUTED }}>{d.dia.split(' ')[0]}</span>)}
       </div>
     </div>
+  )
+}
+
+function BarraRanking({ etiqueta, detalle, valor, max }) {
+  return (
+    <div className="mb-4 last:mb-0">
+      <div className="flex justify-between gap-3 mb-1.5 text-sm">
+        <span className="truncate" style={{ color: INK }}>{etiqueta}{detalle && <span className="ml-2 text-xs" style={{ color: MUTED }}>{detalle}</span>}</span>
+        <span className="font-semibold tabular-nums" style={{ color: INK }}>{valor}</span>
+      </div>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: '#f4f4f5' }}>
+        <div className="h-full" style={{ width: `${max > 0 ? (valor / max) * 100 : 0}%`, background: '#18181b', borderRadius: '0 4px 4px 0' }} />
+      </div>
+    </div>
+  )
+}
+
+function Tarjeta({ titulo, subtitulo, children, className = '' }) {
+  return (
+    <section className={`bg-white border rounded-xl p-5 sm:p-6 ${className}`} style={{ borderColor: BORDER }}>
+      <h2 className="font-semibold" style={{ color: INK }}>{titulo}</h2>
+      {subtitulo && <p className="text-sm mt-1" style={{ color: MUTED }}>{subtitulo}</p>}
+      <div className="mt-5">{children}</div>
+    </section>
+  )
+}
+
+function StatCard({ icon: Icon, label, value, detalle, onClick }) {
+  const Elemento = onClick ? 'button' : 'div'
+  return (
+    <Elemento onClick={onClick} className={`block w-full text-left bg-white border rounded-xl p-5 sm:p-6 ${onClick ? 'transition-colors hover:bg-[#fafafa]' : ''}`} style={{ borderColor: BORDER }}>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-sm font-medium" style={{ color: INK }}>{label}</span>
+        <Icon size={16} style={{ color: MUTED }} />
+      </div>
+      <div className="text-2xl font-bold tabular-nums" style={{ color: INK }}>{value}</div>
+      <p className="text-xs mt-1" style={{ color: MUTED }}>{detalle}</p>
+    </Elemento>
+  )
+}
+
+function Avatar({ nombre, grande }) {
+  return (
+    <span className={`flex-shrink-0 flex items-center justify-center rounded-full font-medium ${grande ? 'w-9 h-9 text-sm' : 'w-8 h-8 text-xs'}`}
+      style={{ background: '#f4f4f5', color: INK }}>{iniciales(nombre)}</span>
   )
 }
 
@@ -49,238 +191,139 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('resumen')
+  const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
     api.get('/dashboard/stats').then(r => { setStats(r.data); setLoading(false) }).catch(() => setLoading(false))
   }, [])
 
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' }).toUpperCase()
+  const hoy = new Date()
+  const inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1)
+  const total = stats?.totalHerr ?? 0
+  const disponibles = stats?.disponibles ?? 0
+  const movs = stats?.ultimosMovs || []
+  const maxMateriales = Math.max(0, ...(stats?.topMateriales || []).map(m => m.totalCantidad))
+  const maxSolicitantes = Math.max(0, ...(stats?.topSolicitantes || []).map(s => s._count.id))
 
-  const maxSalidas = stats?.topMateriales?.length > 0 ? Math.max(...stats.topMateriales.map(m => m.totalCantidad)) : 1
-  const maxSoli = stats?.topSolicitantes?.length > 0 ? Math.max(...stats.topSolicitantes.map(s => s._count.id)) : 1
-  const maxMovs = stats?.movsSemana?.length > 0 ? Math.max(...stats.movsSemana.map(d => Math.max(d.entradas || 0, d.salidas || 0))) : 1
+  const buscar = (e) => {
+    e.preventDefault()
+    const q = busqueda.trim()
+    navigate(q ? `/app/inventario?search=${encodeURIComponent(q)}` : '/app/inventario')
+  }
+
+  const pestanas = [
+    { id: 'resumen', label: 'Resumen' },
+    { id: 'analitica', label: 'Analítica' },
+    { to: '/app/reportes', label: 'Reportes' },
+    { to: '/app/alertas', label: 'Alertas' },
+  ]
 
   return (
-    <>
-    <Banner id="dashboard-novedades" variant="rainbow" message="🎉 ¡Próximamente nuevas funciones!" />
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <div className="display text-4xl" style={{color:'#e8e8e8'}}>
-            BIENVENIDO, <span style={{color:'#f5a623'}}>{user?.nombre?.split(' ')[0]}</span>
-          </div>
-          <div className="mono text-xs mt-1" style={{color:'#444', letterSpacing:'0.1em'}}>{dateStr}</div>
+    <div className="min-h-full flex flex-col" style={{ background: '#fff', color: INK }}>
+      <Banner id="dashboard-novedades" variant="rainbow" message="🎉 ¡Próximamente nuevas funciones!" />
+
+      {/* Barra superior */}
+      <header className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 sm:px-6 py-3 border-b" style={{ borderColor: BORDER }}>
+        <div className="flex items-center gap-2 px-3 py-1.5 border rounded-lg min-w-0" style={{ borderColor: BORDER }}>
+          <Avatar nombre={user?.nombre} />
+          <span className="text-sm font-medium truncate">{user?.nombre}</span>
         </div>
-        <div className="mono text-right" style={{color:'#333', fontSize:'10px'}}>
-          <div>OPERADOR: {user?.empleado}</div>
-          <div>ROL: {user?.role}</div>
-        </div>
-      </div>
+        <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
+          <span>Resumen</span>
+          <Link to="/app/inventario" className="transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>Materiales</Link>
+          <Link to="/app/salidas" className="transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>Salidas</Link>
+          <Link to="/app/tickets" className="transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>Tickets</Link>
+        </nav>
+        <form onSubmit={buscar} className="flex-1 sm:flex-none sm:ml-auto flex items-center gap-2 px-3 py-2 border rounded-lg sm:w-64" style={{ borderColor: BORDER }}>
+          <Search size={14} style={{ color: MUTED }} />
+          <input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar material..." aria-label="Buscar material"
+            className="w-full bg-transparent text-sm outline-none placeholder-[#71717a]" style={{ color: INK }} />
+        </form>
+      </header>
 
-      <div className="h-px mb-8" style={{background:'linear-gradient(to right, #f5a623, #2a2a2a)'}} />
-
-      {loading ? <div className="mono text-xs" style={{color:'#444'}}>CARGANDO DATOS...</div> : (
-        <>
-          {/* Stats cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={Package} label="TOTAL MATERIALES" value={stats?.totalHerr ?? 0} color="#f5a623" />
-            <StatCard icon={Package} label="DISPONIBLES" value={stats?.disponibles ?? 0} color="#2ecc71" />
-            <StatCard icon={Ticket} label="TICKETS PENDIENTES" value={stats?.ticketsPendientes ?? 0} color="#3b82f6"
-              onClick={() => navigate('/app/tickets')} clickable />
-            <StatCard icon={AlertTriangle} label="STOCK BAJO" value={stats?.stockBajo ?? 0} color="#e74c3c"
-              onClick={() => navigate('/app/alertas')} clickable />
-          </div>
-
-          {/* Segunda fila de stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatCard icon={ArrowLeftRight} label="PRÉSTAMOS ACTIVOS" value={stats?.prestActivos ?? 0} color="#8b5cf6" />
-            <StatCard icon={Wrench} label="EN MANTENIMIENTO" value={stats?.mantenimiento ?? 0} color="#6b7280" />
-            <div className="stat-card" style={{borderLeftColor:'#f5a623'}}>
-              <div className="mono text-xs mb-2" style={{color:'#555', fontSize:'10px'}}>ACTIVIDAD HOY</div>
-              <div className="flex gap-4">
-                <div>
-                  <div className="display text-2xl" style={{color:'#2ecc71'}}>
-                    {stats?.movsSemana?.[stats.movsSemana.length-1]?.entradas ?? 0}
-                  </div>
-                  <div className="mono text-xs" style={{color:'#444'}}>entradas</div>
-                </div>
-                <div>
-                  <div className="display text-2xl" style={{color:'#f5a623'}}>
-                    {stats?.movsSemana?.[stats.movsSemana.length-1]?.salidas ?? 0}
-                  </div>
-                  <div className="mono text-xs" style={{color:'#444'}}>salidas</div>
-                </div>
-              </div>
+      <div className="flex-1 p-4 sm:p-6 lg:p-8" style={{ background: '#fff' }}>
+        {/* Título */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm" style={{ borderColor: BORDER }}>
+              <Calendar size={15} style={{ color: MUTED }} />
+              {fechaCorta(inicio)} - {fechaCorta(hoy)}
             </div>
+            <button onClick={() => stats && descargarCsv(stats)} disabled={!stats}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ background: '#18181b', color: '#fafafa' }}>Descargar</button>
           </div>
+        </div>
 
-          {/* Alertas banner */}
-          {stats?.stockBajo > 0 && (
-            <button onClick={() => navigate('/app/alertas')}
-              className="flex items-center gap-3 px-4 py-3 mb-6 w-full text-left transition-opacity hover:opacity-80"
-              style={{background:'#f5a62310', border:'1px solid #f5a62330'}}>
-              <AlertTriangle size={16} style={{color:'#f5a623'}} />
-              <span className="mono text-xs" style={{color:'#f5a623'}}>
-                {stats.stockBajo} MATERIAL(ES) CON STOCK BAJO — HAZ CLIC PARA VER ALERTAS
-              </span>
-            </button>
-          )}
+        {/* Pestañas */}
+        <div className="inline-flex flex-wrap gap-1 p-1 mb-5 rounded-lg" style={{ background: '#f4f4f5' }}>
+          {pestanas.map(p => p.to ? (
+            <Link key={p.to} to={p.to} className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>{p.label}</Link>
+          ) : (
+            <button key={p.id} onClick={() => setTab(p.id)} aria-pressed={tab === p.id} className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              style={tab === p.id ? { background: '#fff', color: INK, boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: MUTED }}>{p.label}</button>
+          ))}
+        </div>
 
-          {/* Gráficas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-            {/* Top materiales */}
-            <div className="card p-5">
-              <div className="flex items-center gap-2 mb-5">
-                <TrendingUp size={14} style={{color:'#f5a623'}} />
-                <span className="mono text-xs tracking-widest" style={{color:'#555'}}>MATERIALES MÁS SOLICITADOS</span>
-              </div>
-              {stats?.topMateriales?.length > 0 ? (
-                <div>
-                  {stats.topMateriales.map((m, i) => (
-                    <HBar key={i}
-                      label={m.nombre || '—'}
-                      sublabel={m.codigo}
-                      value={m.totalCantidad}
-                      max={maxSalidas}
-                      color={['#f5a623','#e8950f','#d4840e','#c0730d','#ac620c'][i]}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="mono text-xs text-center py-6" style={{color:'#333'}}>
-                  SIN DATOS — REGISTRA SALIDAS PARA VER ESTADÍSTICAS
-                </div>
-              )}
+        {loading ? <p className="text-sm" style={{ color: MUTED }}>Cargando datos...</p> : !stats ? (
+          <p className="text-sm" style={{ color: '#b91c1c' }}>No se pudieron cargar los datos del dashboard.</p>
+        ) : tab === 'resumen' ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+              <StatCard icon={Package} label="Total de materiales" value={total} detalle={`${stats.mantenimiento ?? 0} en mantenimiento`} onClick={() => navigate('/app/inventario')} />
+              <StatCard icon={CircleCheck} label="Disponibles" value={disponibles} detalle={`${stats.prestActivos ?? 0} préstamos activos`} />
+              <StatCard icon={Ticket} label="Tickets pendientes" value={stats.ticketsPendientes ?? 0} detalle="Clic para revisar" onClick={() => navigate('/app/tickets')} />
+              <StatCard icon={AlertTriangle} label="Stock bajo" value={stats.stockBajo ?? 0} detalle="Clic para ver alertas" onClick={() => navigate('/app/alertas')} />
             </div>
 
-            {/* Movimientos 7 días */}
-            <div className="card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={14} style={{color:'#3b82f6'}} />
-                <span className="mono text-xs tracking-widest" style={{color:'#555'}}>MOVIMIENTOS ÚLTIMOS 7 DÍAS</span>
-              </div>
-              {stats?.movsSemana && (
-                <>
-                  <div className="flex gap-2 mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-sm" style={{background:'#2ecc71'}} />
-                      <span className="mono text-xs" style={{color:'#555'}}>Entradas</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-sm" style={{background:'#f5a623'}} />
-                      <span className="mono text-xs" style={{color:'#555'}}>Salidas</span>
-                    </div>
-                  </div>
-                  {/* Barras agrupadas */}
-                  <div className="flex items-end gap-2 h-24 mb-2">
-                    {stats.movsSemana.map((d, i) => {
-                      const entPct = maxMovs > 0 ? ((d.entradas || 0) / maxMovs) * 100 : 0
-                      const salPct = maxMovs > 0 ? ((d.salidas || 0) / maxMovs) * 100 : 0
+            <div className="grid grid-cols-1 xl:grid-cols-7 gap-4">
+              <Tarjeta titulo="Salidas por mes" subtitulo="Piezas despachadas en los últimos 12 meses" className="xl:col-span-4">
+                <GraficaMensual datos={stats.salidasMensuales || []} />
+              </Tarjeta>
+
+              <Tarjeta titulo="Últimos movimientos" subtitulo={`Los ${movs.length} más recientes del almacén.`} className="xl:col-span-3">
+                {movs.length ? (
+                  <ul className="space-y-5">
+                    {movs.map(m => {
+                      const suma = ['ENTRADA', 'DEVOLUCION'].includes(m.tipo)
                       return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                          <div className="flex items-end gap-0.5 w-full h-20">
-                            <div className="flex-1 rounded-sm" title={`Entradas: ${d.entradas}`}
-                              style={{height:`${Math.max(entPct, entPct > 0 ? 4 : 0)}%`, background:'#2ecc71', opacity:0.8}} />
-                            <div className="flex-1 rounded-sm" title={`Salidas: ${d.salidas}`}
-                              style={{height:`${Math.max(salPct, salPct > 0 ? 4 : 0)}%`, background:'#f5a623', opacity:0.8}} />
+                        <li key={m.id} className="flex items-center gap-3">
+                          <Avatar nombre={m.user?.nombre} grande />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium truncate">{m.herramienta?.nombre || '—'}</div>
+                            <div className="text-sm truncate" style={{ color: MUTED }}>
+                              {m.tipo.charAt(0) + m.tipo.slice(1).toLowerCase()} · {m.user?.nombre} · {new Date(m.createdAt).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                            </div>
                           </div>
-                        </div>
+                          <span className="font-medium tabular-nums whitespace-nowrap">{suma ? '+' : '−'}{m.cantidad}</span>
+                        </li>
                       )
                     })}
-                  </div>
-                  {/* Labels días */}
-                  <div className="flex gap-2">
-                    {stats.movsSemana.map((d, i) => (
-                      <div key={i} className="flex-1 text-center mono" style={{color:'#444', fontSize:'8px'}}>
-                        {d.dia.split(' ')[0]}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+                  </ul>
+                ) : <p className="text-sm" style={{ color: MUTED }}>Sin movimientos.</p>}
+              </Tarjeta>
             </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Tarjeta titulo="Movimientos de los últimos 7 días" subtitulo="Número de registros por día" className="lg:col-span-2">
+              <GraficaSemana datos={stats.movsSemana || []} />
+            </Tarjeta>
+            <Tarjeta titulo="Materiales más solicitados" subtitulo="Piezas despachadas en total">
+              {stats.topMateriales?.length ? stats.topMateriales.map(m => (
+                <BarraRanking key={m.codigo} etiqueta={m.nombre || '—'} detalle={m.codigo} valor={m.totalCantidad} max={maxMateriales} />
+              )) : <p className="text-sm" style={{ color: MUTED }}>Registra salidas para ver estadísticas.</p>}
+            </Tarjeta>
+            <Tarjeta titulo="Principales solicitantes" subtitulo="Número de salidas">
+              {stats.topSolicitantes?.length ? stats.topSolicitantes.map(s => (
+                <BarraRanking key={s.solicitante} etiqueta={s.solicitante} valor={s._count.id} max={maxSolicitantes} />
+              )) : <p className="text-sm" style={{ color: MUTED }}>Sin datos.</p>}
+            </Tarjeta>
           </div>
-
-          {/* Top solicitantes + últimos movimientos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* Top solicitantes */}
-            <div className="card p-5">
-              <div className="flex items-center gap-2 mb-5">
-                <TrendingUp size={14} style={{color:'#8b5cf6'}} />
-                <span className="mono text-xs tracking-widest" style={{color:'#555'}}>TOP SOLICITANTES</span>
-              </div>
-              {stats?.topSolicitantes?.length > 0 ? (
-                stats.topSolicitantes.map((s, i) => (
-                  <HBar key={i}
-                    label={s.solicitante}
-                    value={s._count.id}
-                    max={maxSoli}
-                    color={['#8b5cf6','#7c3aed','#6d28d9','#5b21b6','#4c1d95'][i]}
-                  />
-                ))
-              ) : (
-                <div className="mono text-xs text-center py-6" style={{color:'#333'}}>SIN DATOS</div>
-              )}
-            </div>
-
-            {/* Últimos movimientos */}
-            <div className="card">
-              <div className="px-5 py-4 border-b" style={{borderColor:'#1a1a1a'}}>
-                <span className="mono text-xs tracking-widest" style={{color:'#555'}}>ÚLTIMOS MOVIMIENTOS</span>
-              </div>
-              <table className="w-full">
-                <tbody>
-                  {(stats?.ultimosMovs || []).map(m => (
-                    <tr key={m.id} className="table-row">
-                      <td className="td mono text-xs" style={{color:'#555', minWidth:'60px'}}>
-                        {new Date(m.createdAt).toLocaleDateString('es-MX', {day:'2-digit',month:'short'})}
-                      </td>
-                      <td className="td">
-                        <div className="text-xs" style={{color:'#e8e8e8'}}>{m.herramienta?.nombre}</div>
-                      </td>
-                      <td className="td">
-                        <span className="mono text-xs font-semibold" style={{color: tipoColor[m.tipo]}}>{m.tipo}</span>
-                      </td>
-                      <td className="td mono text-xs" style={{color:'#555'}}>{m.cantidad}</td>
-                    </tr>
-                  ))}
-                  {!stats?.ultimosMovs?.length && (
-                    <tr><td colSpan={4} className="td mono text-xs text-center" style={{color:'#333'}}>SIN MOVIMIENTOS</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-    </>
-  )
-}
-
-function StatCard({ icon: Icon, label, value, color, onClick, clickable }) {
-  return (
-    <div
-      onClick={onClick}
-      className="stat-card"
-      style={{
-        borderLeftColor: color,
-        cursor: clickable ? 'pointer' : 'default',
-        transition: 'opacity 0.15s'
-      }}
-      onMouseEnter={e => clickable && (e.currentTarget.style.opacity = '0.8')}
-      onMouseLeave={e => clickable && (e.currentTarget.style.opacity = '1')}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <span className="mono tracking-widest" style={{color:'#555', fontSize:'9px'}}>{label}</span>
-        <Icon size={14} style={{color}} />
+        )}
       </div>
-      <div className="display text-4xl" style={{color}}>{value}</div>
-      {clickable && <div className="mono text-xs mt-2" style={{color:'#333', fontSize:'9px'}}>CLIC PARA VER →</div>}
     </div>
   )
 }
