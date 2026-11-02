@@ -7,7 +7,9 @@ async function main() {
   console.log('🌱 Iniciando seed...')
 
   // Admin principal
-  const hashed = await bcrypt.hash('***ELIMINADO***', 12)
+  const passwordAdmin = process.env.SEED_ADMIN_PASSWORD
+  if (!passwordAdmin) throw new Error('Define SEED_ADMIN_PASSWORD para crear el admin.')
+  const hashed = await bcrypt.hash(passwordAdmin, 12)
   const admin = await prisma.user.upsert({
     where: { empleado: 'ADMIN-001' },
     update: {},
@@ -21,10 +23,6 @@ async function main() {
     await prisma.categoria.upsert({ where: { nombre }, update: {}, create: { nombre } })
   }
   console.log('✅ Categorías creadas')
-
-  console.log('\n🔑 CREDENCIALES DE ACCESO:')
-  console.log('   Empleado: ADMIN-001')
-  console.log('   Password: ***ELIMINADO***')
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
