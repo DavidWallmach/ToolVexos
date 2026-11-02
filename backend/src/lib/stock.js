@@ -55,16 +55,9 @@ export const sumarStock = async (tx, id, cantidad, { aumentarTotal = false } = {
   return { herramienta, stockAntes: herramienta.stockDisp - cantidad, stockDespues: herramienta.stockDisp }
 }
 
-// Si dos peticiones generan el mismo folio, la restricción única rechaza una y aquí se reintenta
-export const conFolio = async (prefijo, modelo, crear, intentos = 5) => {
-  for (let i = 0; i < intentos; i++) {
-    const count = await modelo.count()
-    const folio = `${prefijo}-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`
-    try {
-      return await crear(folio)
-    } catch (err) {
-      if (err.code !== 'P2002' || !err.meta?.target?.includes('folio')) throw err
-    }
-  }
-  throw new HttpError(409, 'No se pudo generar el folio, intenta de nuevo.')
-}
+// El bloqueo dura hasta el fin de la transacción: cada folio se genera de uno en uno por prefijo
+export const conFolio = (prisma, prefijo, modelo, crear) => prisma.$transaction(async (tx) => {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${prefijo}::text))`
+  const count = await tx[modelo].count()
+  return crear(tx, `${prefijo}-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`)
+}, TX_OPTS)

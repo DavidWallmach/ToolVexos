@@ -36,7 +36,7 @@ router.post('/', protect, async (req, res, next) => {
     const h = await prisma.herramienta.findUnique({ where: { id: herramientaId } })
     if (!h) return res.status(404).json({ error: 'Herramienta no encontrada.' })
 
-    const ticket = await conFolio('TK', prisma.ticket, (folio) => prisma.ticket.create({
+    const ticket = await conFolio(prisma, 'TK', 'ticket', (tx, folio) => tx.ticket.create({
       data: { folio, userId: req.user.id, herramientaId, cantidad: cantidadPedida, motivo },
       include: {
         user: { select: { nombre: true, empleado: true, role: true } },

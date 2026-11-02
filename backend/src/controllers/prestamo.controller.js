@@ -25,7 +25,7 @@ export const create = async (req, res, next) => {
     const { userId, herramientaId, motivo, fechaRetorno } = req.body
     const cantidad = parseCantidad(req.body.cantidad)
 
-    const prestamo = await conFolio('P', prisma.prestamo, (folio) => prisma.$transaction(async (tx) => {
+    const prestamo = await conFolio(prisma, 'P', 'prestamo', async (tx, folio) => {
       const { stockAntes, stockDespues } = await descontarStock(tx, herramientaId, cantidad)
       const nuevo = await tx.prestamo.create({
         data: { folio, userId, herramientaId, cantidad, motivo, fechaRetorno: fechaRetorno ? new Date(fechaRetorno) : null },
@@ -38,7 +38,7 @@ export const create = async (req, res, next) => {
         data: { herramientaId, userId: req.user.id, tipo: 'SALIDA', cantidad, stockAntes, stockDespues, nota: `Préstamo ${folio}` }
       })
       return nuevo
-    }, TX_OPTS))
+    })
     res.status(201).json({ prestamo })
   } catch (err) { next(err) }
 }

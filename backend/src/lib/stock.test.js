@@ -77,27 +77,23 @@ test('MANTENIMIENTO y BAJA no se sobrescriben al mover stock', async () => {
   }
 })
 
-const errorFolio = () => Object.assign(new Error('duplicado'), { code: 'P2002', meta: { target: ['folio'] } })
-
-test('conFolio reintenta con un conteo nuevo si el folio ya existe', async () => {
-  let count = 6
-  const modelo = { count: async () => count }
-  const vistos = []
-  const folio = await conFolio('TK', modelo, async (f) => {
-    vistos.push(f)
-    if (vistos.length === 1) { count = 7; throw errorFolio() }
+test('conFolio toma el bloqueo antes de contar y arma el folio', async () => {
+  const pasos = []
+  const tx = {
+    $executeRaw: async () => { pasos.push('bloqueo') },
+    ticket: { count: async () => { pasos.push('conteo'); return 6 } }
+  }
+  const prisma = { $transaction: (fn) => fn(tx) }
+  const folio = await conFolio(prisma, 'TK', 'ticket', async (txRecibido, f) => {
+    assert.equal(txRecibido, tx)
     return f
   })
-  const year = new Date().getFullYear()
-  assert.deepEqual(vistos, [`TK-${year}-0007`, `TK-${year}-0008`])
-  assert.equal(folio, `TK-${year}-0008`)
+  assert.deepEqual(pasos, ['bloqueo', 'conteo'])
+  assert.equal(folio, `TK-${new Date().getFullYear()}-0007`)
 })
 
-test('conFolio se rinde con 409 tras agotar los intentos', async () => {
-  await assert.rejects(conFolio('P', { count: async () => 0 }, async () => { throw errorFolio() }), { status: 409 })
-})
-
-test('conFolio no oculta otros errores', async () => {
-  const otro = Object.assign(new Error('fk'), { code: 'P2003' })
-  await assert.rejects(conFolio('P', { count: async () => 0 }, async () => { throw otro }), otro)
+test('conFolio no oculta errores al crear', async () => {
+  const otro = new Error('fk')
+  const tx = { $executeRaw: async () => {}, prestamo: { count: async () => 0 } }
+  await assert.rejects(conFolio({ $transaction: (fn) => fn(tx) }, 'P', 'prestamo', async () => { throw otro }), otro)
 })
