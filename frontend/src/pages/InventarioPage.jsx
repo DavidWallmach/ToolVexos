@@ -58,7 +58,7 @@ export default function InventarioPage() {
 )}
 </div>
       {/* Filtros */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6">
         <div className="flex-1 relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--muted)'}} />
           <input className="input-field pl-9" placeholder="BUSCAR POR NOMBRE O CÓDIGO..." value={search} onChange={e => setSearch(e.target.value)} />

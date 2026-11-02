@@ -46,6 +46,8 @@
   .btn-danger:hover { @apply bg-red-500/20; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  /* Las tablas anchas se desplazan dentro de su tarjeta, no toda la página */
+  .card:has(> table) { overflow-x: auto; }
   .input-field {
     @apply w-full px-3 py-2.5 text-sm outline-none transition;
     background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);

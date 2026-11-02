@@ -360,7 +360,7 @@ export default function ReportesPage() {
 
         {/* Movimientos con fecha */}
         <div className="card p-5" style={{borderLeft:'2px solid #3b82f6'}}>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex-1">
               <div className="display text-lg mb-0.5" style={{color:'#3b82f6'}}>MOVIMIENTOS</div>
               <div className="mono text-xs" style={{color:'var(--muted)'}}>Entradas, salidas y ajustes de stock</div>
@@ -376,7 +376,7 @@ export default function ReportesPage() {
 
         {/* Tickets con fecha y status */}
         <div className="card p-5" style={{borderLeft:'2px solid #f5a623'}}>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex-1">
               <div className="display text-lg mb-0.5" style={{color:'#f5a623'}}>TICKETS DE SOLICITUD</div>
               <div className="mono text-xs" style={{color:'var(--muted)'}}>Solicitudes de material por supervisores y jefes</div>
@@ -404,7 +404,7 @@ export default function ReportesPage() {
 
         {/* Salidas por persona con fecha */}
         <div className="card p-5" style={{borderLeft:'2px solid #2ecc71'}}>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex-1">
               <div className="display text-lg mb-0.5" style={{color:'#2ecc71'}}>SALIDAS POR PERSONA</div>
               <div className="mono text-xs" style={{color:'var(--muted)'}}>Material entregado agrupado por solicitante</div>
@@ -442,7 +442,7 @@ export default function ReportesPage() {
 function ReporteCard({ title, color, desc, loading, onExcel, onPDF, idExcel, idPDF }) {
   return (
     <div className="card p-5" style={{borderLeft:`2px solid ${color}`}}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="display text-lg mb-0.5" style={{color}}>{title}</div>
           <div className="mono text-xs" style={{color:'var(--muted)'}}>{desc}</div>
@@ -455,7 +455,7 @@ function ReporteCard({ title, color, desc, loading, onExcel, onPDF, idExcel, idP
 
 function BtnsExportPDF({ loading, idExcel, idPDF, onExcel, onPDF }) {
   return (
-    <div className="flex gap-2 ml-4 flex-shrink-0">
+    <div className="flex gap-2 flex-shrink-0">
       <button onClick={onExcel} disabled={loading[idExcel]}
         className="btn-ghost flex items-center gap-2 px-4 py-2.5"
         style={{borderColor:'#2ecc7150', color:'#2ecc71'}}>

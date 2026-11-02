@@ -246,7 +246,7 @@ export default function TicketsPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-1 mb-5 p-1 w-fit" style={{background:'var(--surface)', border:'1px solid var(--border)'}}>
+      <div className="flex flex-wrap gap-1 mb-5 p-1 w-fit max-w-full rounded-lg" style={{background:'var(--surface)', border:'1px solid var(--border)'}}>
         {['PENDIENTE','PARCIAL','DESPACHADO','RECHAZADO','TODOS'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className="mono px-4 py-2 text-xs transition-all"
