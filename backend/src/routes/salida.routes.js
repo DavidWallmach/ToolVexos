@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { protect, toolcripUp } from '../middleware/auth.middleware.js'
+import { descontarStock, parseCantidad, TX_OPTS } from '../lib/stock.js'
 const router = Router()
 const prisma = new PrismaClient()
 
@@ -16,25 +17,20 @@ router.get('/', protect, async (req, res, next) => {
 
 router.post('/', protect, toolcripUp, async (req, res, next) => {
   try {
-    const { herramientaId, cantidad, solicitante, departamento, proposito } = req.body
-    const h = await prisma.herramienta.findUnique({ where: { id: herramientaId } })
-    if (!h) return res.status(404).json({ error: 'Herramienta no encontrada.' })
-    if (h.stockDisp < +cantidad) return res.status(400).json({ error: 'Stock insuficiente.' })
+    const { herramientaId, solicitante, departamento, proposito } = req.body
+    const cantidad = parseCantidad(req.body.cantidad)
 
-    const salida = await prisma.salida.create({
-      data: { herramientaId, cantidad: +cantidad, solicitante, departamento, proposito },
-      include: { herramienta: { select: { nombre: true, codigo: true, unidad: true } } }
-    })
-
-    const nuevoStock = h.stockDisp - +cantidad
-    await prisma.herramienta.update({
-      where: { id: herramientaId },
-      data: { stockDisp: nuevoStock, status: nuevoStock === 0 ? 'AGOTADO' : 'DISPONIBLE' }
-    })
-
-    await prisma.movimiento.create({
-      data: { herramientaId, userId: req.user.id, tipo: 'SALIDA', cantidad: +cantidad, stockAntes: h.stockDisp, stockDespues: nuevoStock, nota: `Salida - ${solicitante} / ${departamento}` }
-    })
+    const salida = await prisma.$transaction(async (tx) => {
+      const { stockAntes, stockDespues } = await descontarStock(tx, herramientaId, cantidad)
+      const nueva = await tx.salida.create({
+        data: { herramientaId, cantidad, solicitante, departamento, proposito },
+        include: { herramienta: { select: { nombre: true, codigo: true, unidad: true } } }
+      })
+      await tx.movimiento.create({
+        data: { herramientaId, userId: req.user.id, tipo: 'SALIDA', cantidad, stockAntes, stockDespues, nota: `Salida - ${solicitante} / ${departamento}` }
+      })
+      return nueva
+    }, TX_OPTS)
 
     res.status(201).json({ salida })
   } catch (err) { next(err) }

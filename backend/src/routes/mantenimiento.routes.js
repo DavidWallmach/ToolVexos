@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { protect, adminOnly } from '../middleware/auth.middleware.js'
+import { TX_OPTS } from '../lib/stock.js'
 const router = Router()
 const prisma = new PrismaClient()
 
@@ -17,19 +18,26 @@ router.get('/', protect, async (req, res, next) => {
 router.post('/', protect, adminOnly, async (req, res, next) => {
   try {
     const { herramientaId, tipo, descripcion, tecnico } = req.body
-    const m = await prisma.mantenimiento.create({ data: { herramientaId, tipo, descripcion, tecnico } })
-    await prisma.herramienta.update({ where: { id: herramientaId }, data: { status: 'MANTENIMIENTO' } })
+    const m = await prisma.$transaction(async (tx) => {
+      const nuevo = await tx.mantenimiento.create({ data: { herramientaId, tipo, descripcion, tecnico } })
+      await tx.herramienta.update({ where: { id: herramientaId }, data: { status: 'MANTENIMIENTO' } })
+      return nuevo
+    }, TX_OPTS)
     res.status(201).json({ mantenimiento: m })
   } catch (err) { next(err) }
 })
 
 router.put('/:id/completar', protect, adminOnly, async (req, res, next) => {
   try {
-    const m = await prisma.mantenimiento.update({
-      where: { id: req.params.id },
-      data: { status: 'completado', fechaFin: new Date() }
-    })
-    await prisma.herramienta.update({ where: { id: m.herramientaId }, data: { status: 'DISPONIBLE' } })
+    const m = await prisma.$transaction(async (tx) => {
+      const completado = await tx.mantenimiento.update({
+        where: { id: req.params.id },
+        data: { status: 'completado', fechaFin: new Date() }
+      })
+      const h = await tx.herramienta.findUnique({ where: { id: completado.herramientaId } })
+      await tx.herramienta.update({ where: { id: h.id }, data: { status: h.stockDisp === 0 ? 'AGOTADO' : 'DISPONIBLE' } })
+      return completado
+    }, TX_OPTS)
     res.json({ mantenimiento: m })
   } catch (err) { next(err) }
 })
