@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { X } from 'lucide-react'
+import { CloudOff, Search, X } from 'lucide-react'
 
 export function PageHeader({ titulo, subtitulo, children }) {
   return (
@@ -60,6 +60,23 @@ export function Campo({ etiqueta, ayuda, children }) {
       {ayuda && <span className="block text-xs mt-1" style={{ color: 'var(--muted)' }}>{ayuda}</span>}
     </label>
   )
+}
+
+export function Buscador({ valor, onCambio, placeholder }) {
+  return (
+    <div className="relative flex-1 min-w-[220px]">
+      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
+      <input className="input-field" style={{ paddingLeft: '2.25rem' }} aria-label={placeholder} placeholder={placeholder} value={valor} onChange={e => onCambio(e.target.value)} />
+    </div>
+  )
+}
+
+export function ErrorCarga({ que, onReintentar }) {
+  return <EstadoVacio icono={CloudOff} titulo={`No se pudieron cargar ${que}`} detalle="Revisa tu conexión e intenta de nuevo." accion="Reintentar" onAccion={onReintentar} />
+}
+
+export function Cargando({ texto = 'Cargando...' }) {
+  return <p className="text-sm" style={{ color: 'var(--muted)' }}>{texto}</p>
 }
 
 export function EstadoVacio({ icono: Icono, titulo, detalle, accion, onAccion }) {

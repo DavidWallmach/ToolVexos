@@ -3,6 +3,7 @@ import { CheckCircle, XCircle, AlertTriangle, Printer, Ticket, CloudOff } from '
 import api from '../lib/api'
 import toast from 'react-hot-toast'
 import useAuthStore from '../hooks/useAuth'
+import { fechaHora } from '../lib/format'
 import { Campo, EstadoVacio, Modal, PageHeader, Segmentos } from '../components/ui'
 
 const STATUS = {
@@ -18,7 +19,6 @@ const separarMotivo = (motivo = '') => {
   const [texto, operador] = motivo.split('| Operador:')
   return { texto: texto.trim(), operador: operador?.trim() }
 }
-const fechaHora = (f) => new Date(f).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
 
 // Se usan tanto en la vista previa (anidados en .comprobante) como en la ventana de impresión
 const ESTILOS_COMPROBANTE = `

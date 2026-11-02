@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, PackagePlus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import useAuthStore from '../hooks/useAuth'
+import useCarga from '../hooks/useCarga'
+import { coincide, fechaHora } from '../lib/format'
 import toast from 'react-hot-toast'
+import { Buscador, Campo, Cargando, ErrorCarga, EstadoVacio, Modal, PageHeader } from '../components/ui'
+
+const FORM_VACIO = { herramientaId: '', cantidad: '', proveedor: '', recibio: '', notas: '' }
 
 export default function EntradasPage() {
   const user = useAuthStore(s => s.user)
@@ -10,126 +16,118 @@ export default function EntradasPage() {
   const [entradas, setEntradas] = useState([])
   const [herramientas, setHerramientas] = useState([])
   const [modal, setModal] = useState(false)
-  const [form, setForm] = useState({ herramientaId:'', cantidad:'', proveedor:'', recibio:'', notas:'' })
-  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState(FORM_VACIO)
+  const [busqueda, setBusqueda] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
-  const load = async () => {
-    setLoading(true)
+  const { loading, fallo, recargar } = useCarga(async () => {
     const [e, h] = await Promise.all([api.get('/entradas'), api.get('/herramientas')])
-    setEntradas(e.data.entradas)
-    setHerramientas(h.data.herramientas)
-    setLoading(false)
-  }
+    return () => {
+      setEntradas(e.data.entradas)
+      setHerramientas(h.data.herramientas)
+    }
+  })
 
-  useEffect(() => { load() }, [])
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const set = (k, v) => setForm(f => ({...f, [k]: v}))
-
-  const handleCreate = async () => {
-    if (!form.herramientaId || !form.cantidad) return toast.error('Herramienta y cantidad son obligatorios')
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    setEnviando(true)
     try {
       await api.post('/entradas', form)
       toast.success('Entrada registrada')
       setModal(false)
-      setForm({ herramientaId:'', cantidad:'', proveedor:'', recibio:'', notas:'' })
-      load()
-    } catch (err) { toast.error(err.response?.data?.error || 'Error') }
+      setForm(FORM_VACIO)
+      recargar()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'No se pudo registrar la entrada')
+    } finally { setEnviando(false) }
   }
+
+  const visibles = entradas.filter(e => coincide(busqueda, e.herramienta?.nombre, e.herramienta?.codigo, e.proveedor, e.recibio, e.notas))
 
   return (
     <div className="page-padding">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="display text-3xl" style={{color:'var(--text)'}}>ENTRADAS</div>
-          <div className="mono text-xs mt-0.5" style={{color:'var(--muted)'}}>REGISTRO DE MATERIAL INGRESADO AL ALMACÉN</div>
-        </div>
-        {isAdmin && (
-          <button onClick={() => setModal(true)} className="btn-accent display tracking-widest text-sm">
-            <Plus size={14} /> REGISTRAR ENTRADA
-          </button>
-        )}
-      </div>
+      <PageHeader titulo="Entradas" subtitulo="Material ingresado al almacén">
+        {isAdmin && <button onClick={() => setModal(true)} className="btn-accent"><Plus size={16} /> Registrar entrada</button>}
+      </PageHeader>
 
-      <div className="card">
-        <table className="w-full">
-          <thead>
-            <tr>{['FECHA / HORA','MATERIAL','CANTIDAD','PROVEEDOR','RECIBIÓ','NOTAS'].map(h=><th key={h} className="th">{h}</th>)}</tr>
-          </thead>
-          <tbody>
-            {loading ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>CARGANDO...</td></tr>
-            : entradas.length === 0 ? <tr><td colSpan={6} className="td mono text-xs text-center" style={{color:'var(--muted)'}}>SIN ENTRADAS REGISTRADAS</td></tr>
-            : entradas.map(e => (
-              <tr key={e.id} className="table-row">
-                <td className="td mono text-xs" style={{color:'var(--muted)'}}>
-                  {new Date(e.createdAt).toLocaleDateString('es-MX')} {new Date(e.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
-                </td>
-                <td className="td">
-                  <div className="text-sm" style={{color:'var(--text)'}}>{e.herramienta?.nombre}</div>
-                  <div className="mono text-xs" style={{color:'var(--muted)'}}>{e.herramienta?.codigo}</div>
-                </td>
-                <td className="td">
-                  <span className="mono text-sm font-semibold" style={{color:'#2ecc71'}}>+{e.cantidad}</span>
-                  <span className="mono text-xs ml-1" style={{color:'var(--muted)'}}>{e.herramienta?.unidad}</span>
-                </td>
-                <td className="td mono text-xs" style={{color:'var(--text-2)'}}>{e.proveedor || '—'}</td>
-                <td className="td mono text-xs" style={{color:'var(--text-2)'}}>{e.recibio || '—'}</td>
-                <td className="td text-xs" style={{color:'var(--muted)'}}>{e.notas || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {fallo ? <ErrorCarga que="las entradas" onReintentar={recargar} />
+      : loading ? <Cargando texto="Cargando entradas..." />
+      : entradas.length === 0 ? (
+        <EstadoVacio icono={PackagePlus} titulo="Todavía no hay entradas" detalle="Registra el primer ingreso de material."
+          accion={isAdmin ? 'Registrar entrada' : undefined} onAccion={() => setModal(true)} />
+      ) : (
+        <>
+          <div className="flex mb-4">
+            <Buscador valor={busqueda} onCambio={setBusqueda} placeholder="Buscar por material, proveedor o quien recibió..." />
+          </div>
+
+          {visibles.length === 0 ? <EstadoVacio titulo="Ninguna entrada coincide con tu búsqueda" /> : (
+            <>
+              <div className="card hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <tr>{['Fecha', 'Material', 'Cantidad', 'Proveedor', 'Recibió', 'Notas'].map(h => <th key={h} className="th">{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {visibles.map(e => (
+                      <tr key={e.id} className="table-row">
+                        <td className="td whitespace-nowrap">{fechaHora(e.createdAt)}</td>
+                        <td className="td">
+                          <div className="font-medium" style={{ color: 'var(--text)' }}>{e.herramienta?.nombre}</div>
+                          <div className="mono text-xs" style={{ color: 'var(--accent)' }}>{e.herramienta?.codigo}</div>
+                        </td>
+                        <td className="td whitespace-nowrap"><b className="font-semibold tabular-nums" style={{ color: 'var(--green)' }}>+{e.cantidad}</b> {e.herramienta?.unidad}</td>
+                        <td className="td">{e.proveedor || '—'}</td>
+                        <td className="td">{e.recibio || '—'}</td>
+                        <td className="td">{e.notas || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <ul className="md:hidden space-y-3">
+                {visibles.map(e => (
+                  <li key={e.id} className="card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-medium" style={{ color: 'var(--text)' }}>{e.herramienta?.nombre}</div>
+                        <div className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{fechaHora(e.createdAt)}</div>
+                      </div>
+                      <span className="whitespace-nowrap text-sm" style={{ color: 'var(--text-2)' }}><b className="font-semibold tabular-nums" style={{ color: 'var(--green)' }}>+{e.cantidad}</b> {e.herramienta?.unidad}</span>
+                    </div>
+                    {(e.proveedor || e.recibio || e.notas) && (
+                      <p className="text-sm mt-2" style={{ color: 'var(--text-2)' }}>{[e.proveedor, e.recibio && `Recibió ${e.recibio}`, e.notas].filter(Boolean).join(' · ')}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      )}
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(0,0,0,0.88)'}}>
-          <div className="w-full max-w-md card p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <div className="display text-xl" style={{color:'#2ecc71'}}>REGISTRAR ENTRADA</div>
-                <div className="mono text-xs" style={{color:'var(--muted)'}}>INGRESO DE MATERIAL AL ALMACÉN</div>
-              </div>
-              <button onClick={() => setModal(false)} className="btn-ghost p-2 text-xs">✕</button>
+        <Modal titulo="Registrar entrada" subtitulo="Ingreso de material al almacén" onCerrar={() => setModal(false)}>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <Campo etiqueta="Material">
+              <select className="input-field" required value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
+                <option value="">Selecciona un material</option>
+                {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) · Stock: {h.stockDisp}</option>)}
+              </select>
+            </Campo>
+            <Link to="/app/inventario" className="inline-block text-sm hover:underline" style={{ color: 'var(--accent)' }}>¿Material nuevo? Agrégalo en Materiales</Link>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo etiqueta="Cantidad"><input type="number" min="1" required className="input-field mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} /></Campo>
+              <Campo etiqueta="Proveedor"><input className="input-field" value={form.proveedor} onChange={e => set('proveedor', e.target.value)} placeholder="HISCO" /></Campo>
             </div>
-            <div className="space-y-4">
-              <div>
-  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>MATERIAL *</label>
-  <select className="input-field" value={form.herramientaId} onChange={e => set('herramientaId', e.target.value)}>
-    <option value="">Seleccionar...</option>
-    {herramientas.map(h => <option key={h.id} value={h.id}>{h.nombre} ({h.codigo}) — Stock: {h.stockDisp}</option>)}
-  </select>
-  <button
-    type="button"
-    onClick={() => { setModal(false); window.location.href = '/app/inventario' }}
-    className="mono text-xs mt-1.5 flex items-center gap-1"
-    style={{color:'#f5a623', background:'none', border:'none', cursor:'pointer', padding:0}}
-  >
-    + ¿Material nuevo? Ir a Materiales →
-  </button>
-</div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>CANTIDAD *</label>
-                  <input type="number" min="1" className="input-field mono" value={form.cantidad} onChange={e => set('cantidad', e.target.value)} placeholder="0" />
-                </div>
-                <div>
-                  <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>PROVEEDOR</label>
-                  <input className="input-field" value={form.proveedor} onChange={e => set('proveedor', e.target.value)} placeholder="Ej: HISCO" />
-                </div>
-              </div>
-              <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>RECIBIÓ</label>
-                <input className="input-field" value={form.recibio} onChange={e => set('recibio', e.target.value)} placeholder="Nombre de quien recibió" />
-              </div>
-              <div>
-                <label className="mono text-xs mb-1.5 block" style={{color:'var(--muted)',fontSize:'12px'}}>NOTAS</label>
-                <input className="input-field" value={form.notas} onChange={e => set('notas', e.target.value)} placeholder="Observaciones opcionales..." />
-              </div>
-              <button onClick={handleCreate} className="btn-accent w-full justify-center display tracking-widest" style={{background:'#2ecc71', color:'#000'}}>
-                REGISTRAR ENTRADA
-              </button>
-            </div>
-          </div>
-        </div>
+            <Campo etiqueta="Recibió"><input className="input-field" value={form.recibio} onChange={e => set('recibio', e.target.value)} placeholder="Nombre de quien recibió" /></Campo>
+            <Campo etiqueta="Notas (opcional)"><input className="input-field" value={form.notas} onChange={e => set('notas', e.target.value)} /></Campo>
+            <button type="submit" disabled={enviando} className="btn-accent w-full justify-center disabled:opacity-60">{enviando ? 'Registrando...' : 'Registrar entrada'}</button>
+          </form>
+        </Modal>
       )}
     </div>
   )
