@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Package, CircleCheck, AlertTriangle, Ticket, Calendar, Search } from 'lucide-react'
+import { Package, CircleCheck, AlertTriangle, Ticket, Calendar, Search, Download } from 'lucide-react'
 import api from '../lib/api'
-import useAuthStore from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import Banner from '../components/layout/Banner'
 
-const INK = '#09090b'
-const MUTED = '#71717a'
-const BORDER = '#e4e4e7'
-const SERIE = { entradas: '#2563eb', salidas: '#c2410c' }
+const INK = 'var(--text)'
+const MUTED = '#888'
+const BORDER = 'var(--border)'
+const ACCENT = 'var(--accent)'
+const SERIE = { entradas: '#3b82f6', salidas: '#d97706' }
+const tipoColor = { ENTRADA:'#2ecc71', SALIDA:'#f5a623', DEVOLUCION:'#3b82f6', AJUSTE:'#8b5cf6', BAJA:'#e74c3c' }
 
 const iniciales = (nombre = '') => nombre.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('') || '—'
 
@@ -16,11 +17,8 @@ const fechaDeMes = (mes) => {
   const [anio, m] = mes.split('-').map(Number)
   return new Date(anio, m - 1, 1)
 }
-const nombreMes = (mes) => {
-  const t = fechaDeMes(mes).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')
-  return t[0].toUpperCase() + t.slice(1)
-}
-const fechaCorta = (d) => d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+const nombreMes = (mes) => fechaDeMes(mes).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '').toUpperCase()
+const fechaCorta = (d) => d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
 
 // Eje con 4 divisiones redondas (1, 2, 5, 10...) y siempre en piezas enteras
 const escala = (max) => {
@@ -61,7 +59,7 @@ function GraficaMensual({ datos }) {
   const total = datos.reduce((t, d) => t + d.cantidad, 0)
 
   if (!datos.length || total === 0) {
-    return <div className="flex items-center justify-center text-sm h-56" style={{ color: MUTED }}>Aún no hay salidas en los últimos 12 meses.</div>
+    return <div className="mono text-xs flex items-center justify-center h-56 text-center" style={{ color: MUTED }}>SIN SALIDAS EN LOS ÚLTIMOS 12 MESES</div>
   }
 
   return (
@@ -69,8 +67,8 @@ function GraficaMensual({ datos }) {
       <div className="relative h-56 sm:h-72" role="img" aria-label={`Salidas por mes, ${total} piezas en 12 meses`}>
         {marcas.map(v => (
           <div key={v} className="absolute left-0 right-0 flex items-center gap-2" style={{ bottom: `${(v / tope) * 100}%`, transform: 'translateY(50%)' }}>
-            <span className="w-8 text-right text-xs tabular-nums" style={{ color: MUTED }}>{v}</span>
-            <div className="flex-1 h-px" style={{ background: '#f4f4f5' }} />
+            <span className="mono w-8 text-right tabular-nums" style={{ color: MUTED, fontSize: '10px' }}>{v}</span>
+            <div className="flex-1 h-px" style={{ background: 'var(--surface2)' }} />
           </div>
         ))}
         <div className="absolute inset-y-0 right-0 flex items-end gap-1 sm:gap-2" style={{ left: '2.5rem' }}>
@@ -79,17 +77,17 @@ function GraficaMensual({ datos }) {
               onMouseEnter={() => setActivo(i)} onMouseLeave={() => setActivo(null)}>
               {d.cantidad > 0 && (
                 <div className="w-full transition-opacity" style={{
-                  maxWidth: '48px', height: `${(d.cantidad / tope) * 100}%`, background: '#18181b',
-                  borderRadius: '4px 4px 0 0', opacity: activo === null || activo === i ? 1 : 0.55,
+                  maxWidth: '48px', height: `${(d.cantidad / tope) * 100}%`, background: ACCENT,
+                  borderRadius: '2px 2px 0 0', opacity: activo === null || activo === i ? 1 : 0.45,
                 }} />
               )}
               {activo === i && (
-                <div className="absolute z-10 px-2.5 py-1.5 text-xs whitespace-nowrap rounded-md pointer-events-none" style={{
+                <div className="mono absolute z-10 px-2.5 py-1.5 whitespace-nowrap pointer-events-none" style={{
                   bottom: `calc(${(d.cantidad / tope) * 100}% + 8px)`,
                   ...(i < 2 ? { left: 0 } : i > datos.length - 3 ? { right: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
-                  background: INK, color: '#fafafa',
+                  background: 'var(--surface2)', border: `1px solid ${BORDER}`, color: INK, fontSize: '11px',
                 }}>
-                  {nombreMes(d.mes)} {d.mes.slice(0, 4)}: <b>{d.cantidad}</b> pzas
+                  {nombreMes(d.mes)} {d.mes.slice(0, 4)}: <b>{d.cantidad}</b> PZAS
                 </div>
               )}
             </div>
@@ -98,7 +96,7 @@ function GraficaMensual({ datos }) {
       </div>
       <div className="flex gap-1 sm:gap-2 mt-2" style={{ paddingLeft: '2.5rem' }}>
         {datos.map(d => (
-          <span key={d.mes} className="flex-1 text-center text-xs truncate" style={{ color: MUTED }}>{nombreMes(d.mes)}</span>
+          <span key={d.mes} className="mono flex-1 text-center truncate" style={{ color: MUTED, fontSize: '9px' }}>{nombreMes(d.mes)}</span>
         ))}
       </div>
       <table className="sr-only">
@@ -114,15 +112,15 @@ function GraficaSemana({ datos }) {
   const max = Math.max(1, ...datos.flatMap(d => [d.entradas || 0, d.salidas || 0]))
   const Barra = ({ valor, color, etiqueta }) => (
     <div className="flex-1 min-h-0" title={`${etiqueta}: ${valor}`} style={{
-      height: valor > 0 ? `${Math.max((valor / max) * 100, 4)}%` : 0, background: color, borderRadius: '4px 4px 0 0',
+      height: valor > 0 ? `${Math.max((valor / max) * 100, 4)}%` : 0, background: color, borderRadius: '2px 2px 0 0',
     }} />
   )
   return (
     <div>
       <div className="flex gap-4 mb-4">
-        {[['Entradas', SERIE.entradas], ['Salidas', SERIE.salidas]].map(([t, c]) => (
-          <div key={t} className="flex items-center gap-1.5 text-xs" style={{ color: MUTED }}>
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: c }} />{t}
+        {[['ENTRADAS', SERIE.entradas], ['SALIDAS', SERIE.salidas]].map(([t, c]) => (
+          <div key={t} className="mono flex items-center gap-1.5" style={{ color: MUTED, fontSize: '10px' }}>
+            <span className="w-2.5 h-2.5" style={{ background: c }} />{t}
           </div>
         ))}
       </div>
@@ -135,7 +133,7 @@ function GraficaSemana({ datos }) {
         ))}
       </div>
       <div className="flex gap-2 mt-2 pt-2 border-t" style={{ borderColor: BORDER }}>
-        {datos.map(d => <span key={d.dia} className="flex-1 text-center text-xs truncate" style={{ color: MUTED }}>{d.dia.split(' ')[0]}</span>)}
+        {datos.map(d => <span key={d.dia} className="mono flex-1 text-center truncate" style={{ color: MUTED, fontSize: '9px' }}>{d.dia.split(' ')[0]}</span>)}
       </div>
     </div>
   )
@@ -145,11 +143,11 @@ function BarraRanking({ etiqueta, detalle, valor, max }) {
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex justify-between gap-3 mb-1.5 text-sm">
-        <span className="truncate" style={{ color: INK }}>{etiqueta}{detalle && <span className="ml-2 text-xs" style={{ color: MUTED }}>{detalle}</span>}</span>
-        <span className="font-semibold tabular-nums" style={{ color: INK }}>{valor}</span>
+        <span className="truncate" style={{ color: INK }}>{etiqueta}{detalle && <span className="mono ml-2 text-xs" style={{ color: MUTED }}>{detalle}</span>}</span>
+        <span className="mono font-semibold tabular-nums" style={{ color: INK }}>{valor}</span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: '#f4f4f5' }}>
-        <div className="h-full" style={{ width: `${max > 0 ? (valor / max) * 100 : 0}%`, background: '#18181b', borderRadius: '0 4px 4px 0' }} />
+      <div className="h-1.5 overflow-hidden" style={{ background: 'var(--surface2)' }}>
+        <div className="h-full" style={{ width: `${max > 0 ? (valor / max) * 100 : 0}%`, background: ACCENT }} />
       </div>
     </div>
   )
@@ -157,37 +155,36 @@ function BarraRanking({ etiqueta, detalle, valor, max }) {
 
 function Tarjeta({ titulo, subtitulo, children, className = '' }) {
   return (
-    <section className={`bg-white border rounded-xl p-5 sm:p-6 ${className}`} style={{ borderColor: BORDER }}>
-      <h2 className="font-semibold" style={{ color: INK }}>{titulo}</h2>
-      {subtitulo && <p className="text-sm mt-1" style={{ color: MUTED }}>{subtitulo}</p>}
+    <section className={`card p-5 ${className}`}>
+      <h2 className="display text-xl" style={{ color: INK }}>{titulo}</h2>
+      {subtitulo && <p className="mono mt-1" style={{ color: MUTED, fontSize: '10px', letterSpacing: '0.06em' }}>{subtitulo}</p>}
       <div className="mt-5">{children}</div>
     </section>
   )
 }
 
-function StatCard({ icon: Icon, label, value, detalle, onClick }) {
+function StatCard({ icon: Icon, label, value, detalle, color, onClick }) {
   const Elemento = onClick ? 'button' : 'div'
   return (
-    <Elemento onClick={onClick} className={`block w-full text-left bg-white border rounded-xl p-5 sm:p-6 ${onClick ? 'transition-colors hover:bg-[#fafafa]' : ''}`} style={{ borderColor: BORDER }}>
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-sm font-medium" style={{ color: INK }}>{label}</span>
-        <Icon size={16} style={{ color: MUTED }} />
+    <Elemento onClick={onClick} className={`stat-card block w-full text-left ${onClick ? 'transition-colors hover:bg-[#151515]' : ''}`} style={{ borderLeftColor: color }}>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="mono tracking-widest" style={{ color: MUTED, fontSize: '10px' }}>{label}</span>
+        <Icon size={14} style={{ color }} />
       </div>
-      <div className="text-2xl font-bold tabular-nums" style={{ color: INK }}>{value}</div>
-      <p className="text-xs mt-1" style={{ color: MUTED }}>{detalle}</p>
+      <div className="display text-4xl" style={{ color }}>{value}</div>
+      <p className="mono mt-1" style={{ color: MUTED, fontSize: '10px' }}>{detalle}</p>
     </Elemento>
   )
 }
 
-function Avatar({ nombre, grande }) {
+function Avatar({ nombre }) {
   return (
-    <span className={`flex-shrink-0 flex items-center justify-center rounded-full font-medium ${grande ? 'w-9 h-9 text-sm' : 'w-8 h-8 text-xs'}`}
-      style={{ background: '#f4f4f5', color: INK }}>{iniciales(nombre)}</span>
+    <span className="mono flex-shrink-0 flex items-center justify-center w-9 h-9 text-xs font-semibold"
+      style={{ background: 'var(--surface2)', border: `1px solid ${BORDER}`, color: ACCENT }}>{iniciales(nombre)}</span>
   )
 }
 
 export default function DashboardPage() {
-  const user = useAuthStore(s => s.user)
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -200,8 +197,6 @@ export default function DashboardPage() {
 
   const hoy = new Date()
   const inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1)
-  const total = stats?.totalHerr ?? 0
-  const disponibles = stats?.disponibles ?? 0
   const movs = stats?.ultimosMovs || []
   const maxMateriales = Math.max(0, ...(stats?.topMateriales || []).map(m => m.totalCantidad))
   const maxSolicitantes = Math.max(0, ...(stats?.topSolicitantes || []).map(s => s._count.id))
@@ -213,113 +208,101 @@ export default function DashboardPage() {
   }
 
   const pestanas = [
-    { id: 'resumen', label: 'Resumen' },
-    { id: 'analitica', label: 'Analítica' },
-    { to: '/app/reportes', label: 'Reportes' },
-    { to: '/app/alertas', label: 'Alertas' },
+    { id: 'resumen', label: 'RESUMEN' },
+    { id: 'analitica', label: 'ANALÍTICA' },
+    { to: '/app/reportes', label: 'REPORTES' },
+    { to: '/app/alertas', label: 'ALERTAS' },
   ]
 
   return (
-    <div className="min-h-full flex flex-col" style={{ background: '#fff', color: INK }}>
+    <div className="min-h-full">
       <Banner id="dashboard-novedades" variant="rainbow" message="🎉 ¡Próximamente nuevas funciones!" />
 
-      {/* Barra superior */}
-      <header className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 sm:px-6 py-3 border-b" style={{ borderColor: BORDER }}>
-        <div className="flex items-center gap-2 px-3 py-1.5 border rounded-lg min-w-0" style={{ borderColor: BORDER }}>
-          <Avatar nombre={user?.nombre} />
-          <span className="text-sm font-medium truncate">{user?.nombre}</span>
-        </div>
-        <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
-          <span>Resumen</span>
-          <Link to="/app/inventario" className="transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>Materiales</Link>
-          <Link to="/app/salidas" className="transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>Salidas</Link>
-          <Link to="/app/tickets" className="transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>Tickets</Link>
-        </nav>
-        <form onSubmit={buscar} className="flex-1 sm:flex-none sm:ml-auto flex items-center gap-2 px-3 py-2 border rounded-lg sm:w-64" style={{ borderColor: BORDER }}>
-          <Search size={14} style={{ color: MUTED }} />
-          <input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar material..." aria-label="Buscar material"
-            className="w-full bg-transparent text-sm outline-none placeholder-[#71717a]" style={{ color: INK }} />
-        </form>
-      </header>
-
-      <div className="flex-1 p-4 sm:p-6 lg:p-8" style={{ background: '#fff' }}>
-        {/* Título */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="page-padding">
+        {/* Título y acciones */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <h1 className="display text-4xl" style={{ color: INK }}>DASHBOARD</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm" style={{ borderColor: BORDER }}>
-              <Calendar size={15} style={{ color: MUTED }} />
+            <form onSubmit={buscar} className="flex items-center gap-2 px-3 py-2 border w-full sm:w-56" style={{ background: 'var(--surface2)', borderColor: BORDER }}>
+              <Search size={14} style={{ color: MUTED }} />
+              <input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar material..." aria-label="Buscar material"
+                className="w-full bg-transparent text-sm outline-none placeholder-[#666]" style={{ color: INK }} />
+            </form>
+            <div className="mono flex items-center gap-2 px-3 py-2 border" style={{ borderColor: BORDER, color: MUTED, fontSize: '11px' }}>
+              <Calendar size={14} />
               {fechaCorta(inicio)} - {fechaCorta(hoy)}
             </div>
-            <button onClick={() => stats && descargarCsv(stats)} disabled={!stats}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ background: '#18181b', color: '#fafafa' }}>Descargar</button>
+            <button onClick={() => stats && descargarCsv(stats)} disabled={!stats} className="btn-accent mono disabled:opacity-50" style={{ fontSize: '11px' }}>
+              <Download size={14} /> DESCARGAR
+            </button>
           </div>
         </div>
 
+        <div className="h-px mb-6" style={{ background: 'linear-gradient(to right, #f5a623, #2a2a2a)' }} />
+
         {/* Pestañas */}
-        <div className="inline-flex flex-wrap gap-1 p-1 mb-5 rounded-lg" style={{ background: '#f4f4f5' }}>
+        <div className="inline-flex flex-wrap gap-1 p-1 mb-6 border" style={{ background: 'var(--surface)', borderColor: BORDER }}>
           {pestanas.map(p => p.to ? (
-            <Link key={p.to} to={p.to} className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:text-[#09090b]" style={{ color: MUTED }}>{p.label}</Link>
+            <Link key={p.to} to={p.to} className="mono px-3 py-1.5 transition-colors hover:text-[#e8e8e8]" style={{ color: MUTED, fontSize: '11px', letterSpacing: '0.06em' }}>{p.label}</Link>
           ) : (
-            <button key={p.id} onClick={() => setTab(p.id)} aria-pressed={tab === p.id} className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-              style={tab === p.id ? { background: '#fff', color: INK, boxShadow: '0 1px 2px rgba(0,0,0,.08)' } : { color: MUTED }}>{p.label}</button>
+            <button key={p.id} onClick={() => setTab(p.id)} aria-pressed={tab === p.id} className="mono px-3 py-1.5 transition-colors"
+              style={{ fontSize: '11px', letterSpacing: '0.06em', ...(tab === p.id ? { background: ACCENT, color: '#000', fontWeight: 600 } : { color: MUTED }) }}>{p.label}</button>
           ))}
         </div>
 
-        {loading ? <p className="text-sm" style={{ color: MUTED }}>Cargando datos...</p> : !stats ? (
-          <p className="text-sm" style={{ color: '#b91c1c' }}>No se pudieron cargar los datos del dashboard.</p>
+        {loading ? <p className="mono text-xs" style={{ color: MUTED }}>CARGANDO DATOS...</p> : !stats ? (
+          <p className="mono text-xs" style={{ color: 'var(--red)' }}>NO SE PUDIERON CARGAR LOS DATOS DEL DASHBOARD</p>
         ) : tab === 'resumen' ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
-              <StatCard icon={Package} label="Total de materiales" value={total} detalle={`${stats.mantenimiento ?? 0} en mantenimiento`} onClick={() => navigate('/app/inventario')} />
-              <StatCard icon={CircleCheck} label="Disponibles" value={disponibles} detalle={`${stats.prestActivos ?? 0} préstamos activos`} />
-              <StatCard icon={Ticket} label="Tickets pendientes" value={stats.ticketsPendientes ?? 0} detalle="Clic para revisar" onClick={() => navigate('/app/tickets')} />
-              <StatCard icon={AlertTriangle} label="Stock bajo" value={stats.stockBajo ?? 0} detalle="Clic para ver alertas" onClick={() => navigate('/app/alertas')} />
+              <StatCard icon={Package} label="TOTAL MATERIALES" value={stats.totalHerr ?? 0} color="#f5a623" detalle={`${stats.mantenimiento ?? 0} EN MANTENIMIENTO`} onClick={() => navigate('/app/inventario')} />
+              <StatCard icon={CircleCheck} label="DISPONIBLES" value={stats.disponibles ?? 0} color="#2ecc71" detalle={`${stats.prestActivos ?? 0} PRÉSTAMOS ACTIVOS`} />
+              <StatCard icon={Ticket} label="TICKETS PENDIENTES" value={stats.ticketsPendientes ?? 0} color="#3b82f6" detalle="CLIC PARA REVISAR →" onClick={() => navigate('/app/tickets')} />
+              <StatCard icon={AlertTriangle} label="STOCK BAJO" value={stats.stockBajo ?? 0} color="#e74c3c" detalle="CLIC PARA VER ALERTAS →" onClick={() => navigate('/app/alertas')} />
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-7 gap-4">
-              <Tarjeta titulo="Salidas por mes" subtitulo="Piezas despachadas en los últimos 12 meses" className="xl:col-span-4">
+              <Tarjeta titulo="SALIDAS POR MES" subtitulo="PIEZAS DESPACHADAS EN LOS ÚLTIMOS 12 MESES" className="xl:col-span-4">
                 <GraficaMensual datos={stats.salidasMensuales || []} />
               </Tarjeta>
 
-              <Tarjeta titulo="Últimos movimientos" subtitulo={`Los ${movs.length} más recientes del almacén.`} className="xl:col-span-3">
+              <Tarjeta titulo="ÚLTIMOS MOVIMIENTOS" subtitulo={`LOS ${movs.length} MÁS RECIENTES DEL ALMACÉN`} className="xl:col-span-3">
                 {movs.length ? (
-                  <ul className="space-y-5">
+                  <ul className="space-y-4">
                     {movs.map(m => {
                       const suma = ['ENTRADA', 'DEVOLUCION'].includes(m.tipo)
                       return (
                         <li key={m.id} className="flex items-center gap-3">
-                          <Avatar nombre={m.user?.nombre} grande />
+                          <Avatar nombre={m.user?.nombre} />
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium truncate">{m.herramienta?.nombre || '—'}</div>
-                            <div className="text-sm truncate" style={{ color: MUTED }}>
-                              {m.tipo.charAt(0) + m.tipo.slice(1).toLowerCase()} · {m.user?.nombre} · {new Date(m.createdAt).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                            <div className="text-sm truncate" style={{ color: INK }}>{m.herramienta?.nombre || '—'}</div>
+                            <div className="mono truncate" style={{ color: MUTED, fontSize: '10px' }}>
+                              <span style={{ color: tipoColor[m.tipo] }}>{m.tipo}</span> · {m.user?.nombre} · {new Date(m.createdAt).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }).toUpperCase()}
                             </div>
                           </div>
-                          <span className="font-medium tabular-nums whitespace-nowrap">{suma ? '+' : '−'}{m.cantidad}</span>
+                          <span className="mono font-semibold tabular-nums whitespace-nowrap" style={{ color: INK }}>{suma ? '+' : '−'}{m.cantidad}</span>
                         </li>
                       )
                     })}
                   </ul>
-                ) : <p className="text-sm" style={{ color: MUTED }}>Sin movimientos.</p>}
+                ) : <p className="mono text-xs" style={{ color: MUTED }}>SIN MOVIMIENTOS</p>}
               </Tarjeta>
             </div>
           </>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Tarjeta titulo="Movimientos de los últimos 7 días" subtitulo="Número de registros por día" className="lg:col-span-2">
+            <Tarjeta titulo="MOVIMIENTOS ÚLTIMOS 7 DÍAS" subtitulo="NÚMERO DE REGISTROS POR DÍA" className="lg:col-span-2">
               <GraficaSemana datos={stats.movsSemana || []} />
             </Tarjeta>
-            <Tarjeta titulo="Materiales más solicitados" subtitulo="Piezas despachadas en total">
+            <Tarjeta titulo="MATERIALES MÁS SOLICITADOS" subtitulo="PIEZAS DESPACHADAS EN TOTAL">
               {stats.topMateriales?.length ? stats.topMateriales.map(m => (
                 <BarraRanking key={m.codigo} etiqueta={m.nombre || '—'} detalle={m.codigo} valor={m.totalCantidad} max={maxMateriales} />
-              )) : <p className="text-sm" style={{ color: MUTED }}>Registra salidas para ver estadísticas.</p>}
+              )) : <p className="mono text-xs" style={{ color: MUTED }}>SIN DATOS — REGISTRA SALIDAS PARA VER ESTADÍSTICAS</p>}
             </Tarjeta>
-            <Tarjeta titulo="Principales solicitantes" subtitulo="Número de salidas">
+            <Tarjeta titulo="TOP SOLICITANTES" subtitulo="NÚMERO DE SALIDAS">
               {stats.topSolicitantes?.length ? stats.topSolicitantes.map(s => (
                 <BarraRanking key={s.solicitante} etiqueta={s.solicitante} valor={s._count.id} max={maxSolicitantes} />
-              )) : <p className="text-sm" style={{ color: MUTED }}>Sin datos.</p>}
+              )) : <p className="mono text-xs" style={{ color: MUTED }}>SIN DATOS</p>}
             </Tarjeta>
           </div>
         )}
